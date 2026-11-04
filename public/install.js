@@ -1,13 +1,17 @@
-// Custom "Install our app" banner.
+// Slim "Get it as an app" install bar, fixed at the top of the screen.
 // Chrome fires "beforeinstallprompt" when the app can be installed. We keep that
-// event and show our own banner; clicking the button opens Chrome's install dialog.
-// No "dismissed" flag is stored, so the banner comes back on every visit until
+// event and show our own bar; clicking "Install" opens Chrome's install dialog.
+// The close (x) button only hides the bar for the current page view. No
+// "dismissed" flag is stored, so the bar comes back on the next visit until
 // the app is installed.
 
 (function () {
   const banner = document.getElementById("install-banner");
   const installBtn = document.getElementById("install-btn");
+  const closeBtn = document.getElementById("install-close");
   let deferredPrompt = null;
+  // Closed with the "x" during this page view only (kept in memory, never saved)
+  let closedThisView = false;
 
   // True when the page is already running as the installed app
   function isRunningStandalone() {
@@ -18,13 +22,17 @@
   }
 
   function showBanner() {
-    if (!isRunningStandalone()) {
-      banner.classList.remove("hidden");
+    if (isRunningStandalone() || closedThisView) {
+      return;
     }
+    banner.classList.remove("hidden");
+    // Adds top padding to the page so the bar never covers the header
+    document.body.classList.add("has-install-bar");
   }
 
   function hideBanner() {
     banner.classList.add("hidden");
+    document.body.classList.remove("has-install-bar");
   }
 
   window.addEventListener("beforeinstallprompt", function (event) {
@@ -51,7 +59,12 @@
       console.warn("Install prompt failed", e);
     }
     // If the user said "Cancel", Chrome fires "beforeinstallprompt" again later
-    // (usually on the next visit) and the banner is shown again.
+    // (usually on the next visit) and the bar is shown again.
+  });
+
+  closeBtn.addEventListener("click", function () {
+    closedThisView = true;
+    hideBanner();
   });
 
   window.addEventListener("appinstalled", function () {
@@ -59,7 +72,7 @@
     hideBanner();
   });
 
-  // Hide the banner if the app switches into standalone mode
+  // Hide the bar if the app switches into standalone mode
   window.matchMedia("(display-mode: standalone)").addEventListener("change", function (event) {
     if (event.matches) {
       hideBanner();

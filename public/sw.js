@@ -4,7 +4,7 @@
 // - shows task alarms as notifications, even when the site is closed
 
 // Change this version whenever the caching logic changes, so old caches are removed.
-const CACHE_VERSION = "habhit-v2";
+const CACHE_VERSION = "habhit-v3";
 
 // Basic files needed to open the app offline
 const APP_SHELL = [

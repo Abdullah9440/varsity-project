@@ -299,6 +299,26 @@ textarea {
   color: #b91c1c;
 }
 
+.badge.live {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.badge.soon {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.badge.cat-meeting {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.badge.cat-class {
+  background: #cffafe;
+  color: #0e7490;
+}
+
 .badge.today {
   background: #fef3c7;
   color: #b45309;
@@ -397,7 +417,8 @@ textarea {
   }
 }
 /* Date picker box (created by flatpickr) */
-#task-form input.date-input {
+#task-form input.date-input,
+#task-form input.time-input {
   flex: 1 1 130px;
   width: 100%;
 }

@@ -7,6 +7,8 @@ let editingId = null;      // id of the task being edited (null = adding a new t
 const form = document.getElementById("task-form");
 const titleInput = document.getElementById("task-title");
 const dateInput = document.getElementById("task-date");
+const startInput = document.getElementById("task-start");
+const endInput = document.getElementById("task-end");
 const categoryInput = document.getElementById("task-category");
 const priorityInput = document.getElementById("task-priority");
 const notesInput = document.getElementById("task-notes");
@@ -30,6 +32,46 @@ const datePicker = flatpickr(dateInput, {
   disableMobile: true    // keep the same format on phones
 });
 
+// Time pickers: show 12-hour time (e.g. 9:30 AM) but store 24-hour HH:MM
+function makeTimePicker(input) {
+  return flatpickr(input, {
+    enableTime: true,
+    noCalendar: true,
+    dateFormat: "H:i",
+    altInput: true,
+    altFormat: "h:i K",
+    altInputClass: "time-input",
+    minuteIncrement: 5,
+    disableMobile: true
+  });
+}
+const startPicker = makeTimePicker(startInput);
+const endPicker = makeTimePicker(endInput);
+
+// Categories that are scheduled events (shown in "Classes & meetings")
+const scheduleCategories = ["Meeting", "Class", "Exam"];
+
+// Convert HH:MM (24h) to h:MM AM/PM for display
+function formatTime(timeString) {
+  const parts = timeString.split(":");
+  let hours = Number(parts[0]);
+  const suffix = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12;
+  return hours + ":" + parts[1] + " " + suffix;
+}
+
+// Current time as HH:MM (24h)
+function nowTimeString() {
+  const d = new Date();
+  return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+}
+
+// Minutes between two HH:MM values (b - a)
+function minutesBetween(a, b) {
+  const pa = a.split(":"), pb = b.split(":");
+  return (Number(pb[0]) * 60 + Number(pb[1])) - (Number(pa[0]) * 60 + Number(pa[1]));
+}
+
 // Convert YYYY-MM-DD to dd/mm/yyyy for display
 function formatDate(dateString) {
   const parts = dateString.split("-");
@@ -49,7 +91,7 @@ function todayString() {
   return d.getFullYear() + "-" + month + "-" + day;
 }
 
-// Returns "overdue", "today" or "" for a task
+// Returns "overdue", "live", "soon", "today" or "" for a task
 function getDueStatus(task) {
   if (task.done || !task.date) {
     return "";
@@ -59,18 +101,39 @@ function getDueStatus(task) {
     return "overdue";
   }
   if (task.date === today) {
+    const now = nowTimeString();
+    const finish = task.endTime || task.startTime;
+    if (finish && now > finish) {
+      return "overdue";
+    }
+    if (task.startTime && task.endTime && now >= task.startTime) {
+      return "live";
+    }
+    if (task.startTime) {
+      const mins = minutesBetween(now, task.startTime);
+      if (mins >= 0 && mins <= 60) {
+        return "soon";
+      }
+    }
     return "today";
   }
   return "";
 }
 
+// Value used to sort by date and time (no date goes last)
+function whenKey(task) {
+  return (task.date || "9999-12-31") + " " + (task.startTime || "99:99");
+}
+
 // ---------- Add, edit, toggle, delete ----------
 
-function addTask(title, date, category, priority, notes) {
+function addTask(title, date, startTime, endTime, category, priority, notes) {
   tasks.push({
     id: Date.now(),
     title: title,
     date: date,
+    startTime: startTime,
+    endTime: endTime,
     category: category,
     priority: priority,
     notes: notes,
@@ -78,11 +141,13 @@ function addTask(title, date, category, priority, notes) {
   });
 }
 
-function updateTask(id, title, date, category, priority, notes) {
+function updateTask(id, title, date, startTime, endTime, category, priority, notes) {
   tasks = tasks.map(function (task) {
     if (task.id === id) {
       task.title = title;
       task.date = date;
+      task.startTime = startTime;
+      task.endTime = endTime;
       task.category = category;
       task.priority = priority;
       task.notes = notes;
@@ -121,7 +186,9 @@ function startEdit(task) {
   editingId = task.id;
   titleInput.value = task.title;
   datePicker.setDate(task.date || null);
-  categoryInput.value = task.category || "Study";
+  startPicker.setDate(task.startTime || null);
+  endPicker.setDate(task.endTime || null);
+  categoryInput.value = task.category || "Office work";
   priorityInput.value = task.priority;
   notesInput.value = task.notes || "";
   submitBtn.textContent = "Save changes";
@@ -135,6 +202,8 @@ function resetForm() {
   editingId = null;
   form.reset();
   datePicker.clear();
+  startPicker.clear();
+  endPicker.clear();
   priorityInput.value = "Medium";
   submitBtn.textContent = "Add task";
   cancelBtn.classList.add("hidden");
@@ -149,7 +218,7 @@ function sortTasks(list) {
   if (mode === "due") {
     // Tasks without a date go to the end
     sorted.sort(function (a, b) {
-      return (a.date || "9999-12-31").localeCompare(b.date || "9999-12-31");
+      return whenKey(a).localeCompare(whenKey(b));
     });
   } else if (mode === "priority") {
     // High first; same priority -> soonest due date first
@@ -158,7 +227,7 @@ function sortTasks(list) {
       if (diff !== 0) {
         return diff;
       }
-      return (a.date || "9999-12-31").localeCompare(b.date || "9999-12-31");
+      return whenKey(a).localeCompare(whenKey(b));
     });
   } else if (mode === "oldest") {
     sorted.sort(function (a, b) {
@@ -185,6 +254,12 @@ function getVisibleTasks() {
     }
     if (currentFilter === "completed") {
       return task.done;
+    }
+    if (currentFilter === "today") {
+      return task.date === todayString();
+    }
+    if (currentFilter === "schedule") {
+      return scheduleCategories.includes(task.category);
     }
     return true;
   });
@@ -251,17 +326,28 @@ function renderTasks() {
 
     const meta = document.createElement("div");
     meta.className = "task-meta";
-    meta.appendChild(createBadge(task.category || "Study"));
+    const category = task.category || "Study";
+    meta.appendChild(createBadge(category, "cat-" + category.toLowerCase().replace(/\s+/g, "-")));
 
     const status = getDueStatus(task);
     if (status === "overdue") {
       meta.appendChild(createBadge("Overdue", "overdue"));
+    } else if (status === "live") {
+      meta.appendChild(createBadge("In progress", "live"));
+    } else if (status === "soon") {
+      meta.appendChild(createBadge("Starts in " + minutesBetween(nowTimeString(), task.startTime) + " min", "soon"));
     } else if (status === "today") {
-      meta.appendChild(createBadge("Due today", "today"));
+      meta.appendChild(createBadge("Today", "today"));
     }
 
-    const dueText = task.date ? "Due: " + formatDate(task.date) : "No due date";
-    meta.appendChild(document.createTextNode(dueText + " | " + task.priority));
+    let whenText = task.date ? formatDate(task.date) : "No date";
+    if (task.startTime) {
+      whenText += ", " + formatTime(task.startTime);
+      if (task.endTime) {
+        whenText += " – " + formatTime(task.endTime);
+      }
+    }
+    meta.appendChild(document.createTextNode(whenText + " | " + task.priority));
 
     info.appendChild(title);
     info.appendChild(meta);
@@ -312,10 +398,21 @@ form.addEventListener("submit", function (event) {
     return;
   }
 
+  const startTime = startInput.value;
+  const endTime = endInput.value;
+  if (startTime && endTime && endTime <= startTime) {
+    alert("End time must be after the start time.");
+    return;
+  }
+  if ((startTime || endTime) && !dateInput.value) {
+    alert("Please pick a date for this time.");
+    return;
+  }
+
   if (editingId !== null) {
-    updateTask(editingId, title, dateInput.value, categoryInput.value, priorityInput.value, notesInput.value.trim());
+    updateTask(editingId, title, dateInput.value, startTime, endTime, categoryInput.value, priorityInput.value, notesInput.value.trim());
   } else {
-    addTask(title, dateInput.value, categoryInput.value, priorityInput.value, notesInput.value.trim());
+    addTask(title, dateInput.value, startTime, endTime, categoryInput.value, priorityInput.value, notesInput.value.trim());
   }
 
   saveTasks();
@@ -376,3 +473,5 @@ themeBtn.addEventListener("click", function () {
 // Start the app
 applyTheme(localStorage.getItem("theme") || "light");
 renderTasks();
+// Refresh "Starts in", "In progress" and overdue labels every minute
+setInterval(renderTasks, 60000);

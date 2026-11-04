@@ -9,6 +9,7 @@ const titleInput = document.getElementById("task-title");
 const dateInput = document.getElementById("task-date");
 const categoryInput = document.getElementById("task-category");
 const priorityInput = document.getElementById("task-priority");
+const notesInput = document.getElementById("task-notes");
 const submitBtn = document.getElementById("submit-btn");
 const cancelBtn = document.getElementById("cancel-btn");
 const searchInput = document.getElementById("search");
@@ -65,24 +66,26 @@ function getDueStatus(task) {
 
 // ---------- Add, edit, toggle, delete ----------
 
-function addTask(title, date, category, priority) {
+function addTask(title, date, category, priority, notes) {
   tasks.push({
     id: Date.now(),
     title: title,
     date: date,
     category: category,
     priority: priority,
+    notes: notes,
     done: false
   });
 }
 
-function updateTask(id, title, date, category, priority) {
+function updateTask(id, title, date, category, priority, notes) {
   tasks = tasks.map(function (task) {
     if (task.id === id) {
       task.title = title;
       task.date = date;
       task.category = category;
       task.priority = priority;
+      task.notes = notes;
     }
     return task;
   });
@@ -120,6 +123,7 @@ function startEdit(task) {
   datePicker.setDate(task.date || null);
   categoryInput.value = task.category || "Study";
   priorityInput.value = task.priority;
+  notesInput.value = task.notes || "";
   submitBtn.textContent = "Save changes";
   cancelBtn.classList.remove("hidden");
   titleInput.focus();
@@ -148,8 +152,21 @@ function sortTasks(list) {
       return (a.date || "9999-12-31").localeCompare(b.date || "9999-12-31");
     });
   } else if (mode === "priority") {
+    // High first; same priority -> soonest due date first
     sorted.sort(function (a, b) {
-      return priorityRank[a.priority] - priorityRank[b.priority];
+      const diff = priorityRank[a.priority] - priorityRank[b.priority];
+      if (diff !== 0) {
+        return diff;
+      }
+      return (a.date || "9999-12-31").localeCompare(b.date || "9999-12-31");
+    });
+  } else if (mode === "oldest") {
+    sorted.sort(function (a, b) {
+      return a.id - b.id;
+    });
+  } else if (mode === "title") {
+    sorted.sort(function (a, b) {
+      return a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
     });
   } else {
     sorted.sort(function (a, b) {
@@ -173,7 +190,8 @@ function getVisibleTasks() {
   });
 
   list = list.filter(function (task) {
-    return task.title.toLowerCase().includes(query);
+    return task.title.toLowerCase().includes(query) ||
+      (task.notes || "").toLowerCase().includes(query);
   });
 
   return sortTasks(list);
@@ -248,6 +266,13 @@ function renderTasks() {
     info.appendChild(title);
     info.appendChild(meta);
 
+    if (task.notes) {
+      const notes = document.createElement("p");
+      notes.className = "task-notes";
+      notes.textContent = task.notes;
+      info.appendChild(notes);
+    }
+
     const actions = document.createElement("div");
     actions.className = "actions";
 
@@ -288,9 +313,9 @@ form.addEventListener("submit", function (event) {
   }
 
   if (editingId !== null) {
-    updateTask(editingId, title, dateInput.value, categoryInput.value, priorityInput.value);
+    updateTask(editingId, title, dateInput.value, categoryInput.value, priorityInput.value, notesInput.value.trim());
   } else {
-    addTask(title, dateInput.value, categoryInput.value, priorityInput.value);
+    addTask(title, dateInput.value, categoryInput.value, priorityInput.value, notesInput.value.trim());
   }
 
   saveTasks();
@@ -301,7 +326,15 @@ form.addEventListener("submit", function (event) {
 cancelBtn.addEventListener("click", resetForm);
 
 searchInput.addEventListener("input", renderTasks);
-sortSelect.addEventListener("change", renderTasks);
+// Remember the chosen sort order between visits
+const savedSort = localStorage.getItem("sort");
+if (savedSort && sortSelect.querySelector('option[value="' + savedSort + '"]')) {
+  sortSelect.value = savedSort;
+}
+sortSelect.addEventListener("change", function () {
+  localStorage.setItem("sort", sortSelect.value);
+  renderTasks();
+});
 
 filterButtons.forEach(function (button) {
   button.addEventListener("click", function () {

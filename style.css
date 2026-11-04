@@ -25,6 +25,12 @@ body.dark {
   padding: 0;
 }
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden; /* never let anything push the page wider than the screen */
+}
+
 body {
   font-family: "Segoe UI", Arial, sans-serif;
   background: var(--bg);
@@ -122,7 +128,11 @@ h1 {
 }
 
 input,
-select {
+select,
+textarea {
+  min-width: 0;   /* lets fields shrink on small screens instead of overflowing */
+  max-width: 100%;
+  font-family: inherit;
   padding: 10px;
   background: var(--field);
   color: var(--text);
@@ -131,8 +141,13 @@ select {
   font-size: 1rem;
 }
 
-#task-form input[type="text"] {
+#task-form input[type="text"],
+#task-form textarea {
   flex: 1 1 100%;
+}
+
+#task-form textarea {
+  resize: vertical;
 }
 
 #task-form input[type="date"],
@@ -172,7 +187,23 @@ select {
 }
 
 .toolbar input {
-  flex: 1;
+  flex: 1 1 auto;
+  width: 100%;
+}
+
+.sort-box {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.sort-box select {
+  width: 200px;
+  cursor: pointer;
 }
 
 /* Filters */
@@ -225,6 +256,14 @@ select {
 .task-title {
   font-weight: 600;
   word-wrap: break-word;
+}
+
+.task-notes {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 6px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .task-meta {
@@ -306,12 +345,59 @@ select {
 }
 
 @media (max-width: 520px) {
+  body {
+    padding: 12px 8px;
+  }
+
+  .container {
+    padding: 16px;
+  }
+
+  .top {
+    gap: 8px;
+  }
+
+  h1 {
+    font-size: 1.3rem;
+  }
+
+  .stat span {
+    font-size: 1.15rem;
+  }
+
+  .stat small {
+    font-size: 0.7rem;
+  }
+
+  /* Search and sort stack in a fixed layout, each full width */
+  .toolbar {
+    flex-direction: column;
+  }
+
+  .sort-box {
+    width: 100%;
+  }
+
+  .sort-box select {
+    flex: 1 1 auto;
+    width: auto;
+  }
+
+  .filters {
+    flex-wrap: wrap;
+  }
+
   .task-item {
     flex-wrap: wrap;
   }
 
+  .actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 /* Date picker box (created by flatpickr) */
 #task-form input.date-input {
   flex: 1 1 130px;
+  width: 100%;
 }

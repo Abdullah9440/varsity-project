@@ -41,18 +41,24 @@
         <option value="Medium" selected>Medium</option>
         <option value="High">High</option>
       </select>
+      <textarea id="task-notes" rows="2" placeholder="Notes (optional)"></textarea>
       <button type="submit" id="submit-btn" class="add-btn">Add task</button>
       <button type="button" id="cancel-btn" class="cancel-btn hidden">Cancel</button>
     </form>
 
     <!-- Search and sort -->
     <div class="toolbar">
-      <input type="text" id="search" placeholder="Search tasks...">
-      <select id="sort">
-        <option value="newest">Newest first</option>
-        <option value="due">Due date</option>
-        <option value="priority">Priority</option>
-      </select>
+      <input type="search" id="search" placeholder="Search tasks...">
+      <label class="sort-box" for="sort">
+        <span>Sort by</span>
+        <select id="sort">
+          <option value="newest">Newest added</option>
+          <option value="oldest">Oldest added</option>
+          <option value="due">Due date (soonest)</option>
+          <option value="priority">Priority (high to low)</option>
+          <option value="title">Title (A to Z)</option>
+        </select>
+      </label>
     </div>
 
     <!-- Filter buttons -->

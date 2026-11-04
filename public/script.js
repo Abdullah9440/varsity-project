@@ -659,12 +659,17 @@ function updateAlarmNote() {
 }
 alarmInput.addEventListener("change", updateAlarmNote);
 
+// The service worker is registered on every browser that supports it (not only
+// browsers with push), because Chrome needs it to offer "Install app".
 async function registerServiceWorker() {
-  if (!pushSupported) {
+  if (!("serviceWorker" in navigator)) {
     return null;
   }
   try {
-    swRegistration = await navigator.serviceWorker.register("/sw.js");
+    // updateViaCache "none" makes the browser always check the server for a new sw.js
+    swRegistration = await navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" });
+    // Look for a newer service worker on every page load
+    swRegistration.update().catch(function () {});
     await navigator.serviceWorker.ready;
   } catch (e) {
     console.warn("Service worker registration failed", e);
@@ -714,7 +719,7 @@ function scheduleAlarmSync() {
 
 // Send this device's upcoming alarms to the server
 async function syncAlarms() {
-  if (!swRegistration || Notification.permission !== "granted") {
+  if (!pushSupported || !swRegistration || Notification.permission !== "granted") {
     return;
   }
   try {

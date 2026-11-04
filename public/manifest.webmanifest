@@ -1,6 +1,8 @@
 {
+  "id": "/",
   "name": "Habhit",
   "short_name": "Habhit",
+  "description": "Habhit task manager: tasks, classes, meetings and alarms.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

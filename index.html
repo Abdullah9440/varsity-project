@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Task Manager</title>
+  <title>Task Manager</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main class="container">
     <header class="top">
-      <h1>Student Task Manager</h1>
+      <h1>Task Manager</h1>
       <button id="theme-btn" type="button" class="ghost-btn">Dark mode</button>
     </header>
 
@@ -28,36 +28,56 @@
 
     <!-- Add / edit form -->
     <form id="task-form">
-      <input type="text" id="task-title" placeholder="What do you need to do?" required>
-      <input type="text" id="task-date" placeholder="dd/mm/yyyy">
+      <input type="text" id="task-title" placeholder="Task, meeting or class name" required>
       <select id="task-category">
-        <option value="Study">Study</option>
-        <option value="Assignment">Assignment</option>
-        <option value="Exam">Exam</option>
-        <option value="Personal">Personal</option>
+        <optgroup label="Office">
+          <option value="Meeting">Meeting</option>
+          <option value="Office work">Office work</option>
+          <option value="Deadline">Deadline</option>
+        </optgroup>
+        <optgroup label="Class schedule">
+          <option value="Class">Class</option>
+          <option value="Assignment">Assignment</option>
+          <option value="Exam">Exam</option>
+          <option value="Study">Study</option>
+        </optgroup>
+        <optgroup label="Other">
+          <option value="Personal">Personal</option>
+        </optgroup>
       </select>
+      <input type="text" id="task-date" placeholder="Date (dd/mm/yyyy)">
+      <input type="text" id="task-start" placeholder="Start time">
+      <input type="text" id="task-end" placeholder="End time">
       <select id="task-priority">
         <option value="Low">Low</option>
         <option value="Medium" selected>Medium</option>
         <option value="High">High</option>
       </select>
+      <textarea id="task-notes" rows="2" placeholder="Notes: room, meeting link, agenda... (optional)"></textarea>
       <button type="submit" id="submit-btn" class="add-btn">Add task</button>
       <button type="button" id="cancel-btn" class="cancel-btn hidden">Cancel</button>
     </form>
 
     <!-- Search and sort -->
     <div class="toolbar">
-      <input type="text" id="search" placeholder="Search tasks...">
-      <select id="sort">
-        <option value="newest">Newest first</option>
-        <option value="due">Due date</option>
-        <option value="priority">Priority</option>
-      </select>
+      <input type="search" id="search" placeholder="Search tasks, classes, meetings...">
+      <label class="sort-box" for="sort">
+        <span>Sort by</span>
+        <select id="sort">
+          <option value="newest">Newest added</option>
+          <option value="oldest">Oldest added</option>
+          <option value="due">Date &amp; time (soonest)</option>
+          <option value="priority">Priority (high to low)</option>
+          <option value="title">Title (A to Z)</option>
+        </select>
+      </label>
     </div>
 
     <!-- Filter buttons -->
     <div class="filters">
       <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="today">Today</button>
+      <button class="filter-btn" data-filter="schedule">Classes &amp; meetings</button>
       <button class="filter-btn" data-filter="active">Active</button>
       <button class="filter-btn" data-filter="completed">Completed</button>
     </div>

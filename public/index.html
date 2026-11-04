@@ -3,21 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Task Manager</title>
+  <title>HABHIT TASK MANAGER</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
   <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icon.svg">
+  <meta name="theme-color" content="#1e3a8a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="HABHIT">
 </head>
 <body>
   <main class="container">
     <header class="top">
-      <h1>Task Manager</h1>
+      <h1>HABHIT TASK MANAGER</h1>
       <button id="theme-btn" type="button" class="ghost-btn">Dark mode</button>
     </header>
 
     <!-- Statistics -->
     <section class="stats">
-      <div class="stat"><span id="stat-total">0</span><small>Total</small></div>
-      <div class="stat"><span id="stat-done">0</span><small>Done</small></div>
+      <div class="stat" id="stat-total-box"><span class="stat-value"><b id="stat-total">0</b><i id="complete-check" class="complete-check hidden" aria-label="All tasks completed" title="All tasks completed">&#10003;</i></span><small>Total</small></div>
+      <div class="stat done"><span id="stat-done">0</span><small>Done</small></div>
       <div class="stat"><span id="stat-pending">0</span><small>Pending</small></div>
       <div class="stat overdue"><span id="stat-overdue">0</span><small>Overdue</small></div>
     </section>
@@ -28,12 +34,11 @@
 
     <!-- Add / edit form -->
     <form id="task-form">
-      <input type="text" id="task-title" placeholder="Task, meeting or class name" required>
+      <input type="text" id="task-title" placeholder="Enter your task" required>
       <select id="task-category">
         <optgroup label="Office">
           <option value="Meeting">Meeting</option>
           <option value="Office work">Office work</option>
-          <option value="Deadline">Deadline</option>
         </optgroup>
         <optgroup label="Class schedule">
           <option value="Class">Class</option>
@@ -45,15 +50,16 @@
           <option value="Personal">Personal</option>
         </optgroup>
       </select>
-      <input type="text" id="task-date" placeholder="Date (dd/mm/yyyy)">
-      <input type="text" id="task-start" placeholder="Start time">
-      <input type="text" id="task-end" placeholder="End time">
-      <select id="task-priority">
-        <option value="Low">Low</option>
-        <option value="Medium" selected>Medium</option>
-        <option value="High">High</option>
-      </select>
-      <textarea id="task-notes" rows="2" placeholder="Notes: room, meeting link, agenda... (optional)"></textarea>
+      <input type="text" id="task-date" placeholder="Date (dd/mm/yyyy) *" required>
+      <div class="start-wrap">
+        <input type="text" id="task-start" placeholder="Start time">
+        <label class="alarm-toggle" for="task-alarm" title="Ring an alarm at the start time">
+          <input type="checkbox" id="task-alarm">
+          <span>&#128276; Alarm</span>
+        </label>
+      </div>
+      <p id="alarm-note" class="alarm-note hidden"></p>
+      <textarea id="task-notes" rows="2" placeholder="NOTES"></textarea>
       <button type="submit" id="submit-btn" class="add-btn">Add task</button>
       <button type="button" id="cancel-btn" class="cancel-btn hidden">Cancel</button>
     </form>
@@ -67,7 +73,6 @@
           <option value="newest">Newest added</option>
           <option value="oldest">Oldest added</option>
           <option value="due">Date &amp; time (soonest)</option>
-          <option value="priority">Priority (high to low)</option>
           <option value="title">Title (A to Z)</option>
         </select>
       </label>
@@ -86,6 +91,20 @@
 
     <button id="clear-btn" type="button" class="clear-btn">Clear completed</button>
   </main>
+  <!-- Alarm pop-up (shown when a task's alarm rings) -->
+  <div id="alarm-modal" class="alarm-modal hidden" role="alertdialog" aria-labelledby="alarm-title">
+    <div class="alarm-box">
+      <div class="alarm-bell">&#128276;</div>
+      <h2 id="alarm-title">Alarm</h2>
+      <p id="alarm-task"></p>
+      <p id="alarm-time" class="alarm-time"></p>
+      <div class="alarm-actions">
+        <button type="button" id="alarm-snooze" class="cancel-btn">Snooze 5 min</button>
+        <button type="button" id="alarm-stop" class="add-btn">Stop</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
 
   <script src="script.js"></script>

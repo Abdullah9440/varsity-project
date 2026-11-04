@@ -630,3 +630,37 @@ body.dark .alarm-toggle:has(input:checked) {
 body.dark .alarm-note.ok {
   color: #86efac;
 }
+
+/* Install banner (fixed at the bottom of the screen) */
+.install-banner {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 10px 12px;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.install-banner.hidden {
+  display: none;
+}
+
+.install-text {
+  flex: 1 1 auto;
+  font-size: 0.9rem;
+}
+
+.install-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}

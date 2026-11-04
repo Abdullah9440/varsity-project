@@ -8,9 +8,8 @@ const form = document.getElementById("task-form");
 const titleInput = document.getElementById("task-title");
 const dateInput = document.getElementById("task-date");
 const startInput = document.getElementById("task-start");
-const endInput = document.getElementById("task-end");
+const alarmInput = document.getElementById("task-alarm");
 const categoryInput = document.getElementById("task-category");
-const priorityInput = document.getElementById("task-priority");
 const notesInput = document.getElementById("task-notes");
 const submitBtn = document.getElementById("submit-btn");
 const cancelBtn = document.getElementById("cancel-btn");
@@ -20,8 +19,6 @@ const taskList = document.getElementById("task-list");
 const filterButtons = document.querySelectorAll(".filter-btn");
 const clearBtn = document.getElementById("clear-btn");
 const themeBtn = document.getElementById("theme-btn");
-
-const priorityRank = { High: 0, Medium: 1, Low: 2 };
 
 // Date picker that shows dd/mm/yyyy but stores YYYY-MM-DD
 const datePicker = flatpickr(dateInput, {
@@ -46,7 +43,6 @@ function makeTimePicker(input) {
   });
 }
 const startPicker = makeTimePicker(startInput);
-const endPicker = makeTimePicker(endInput);
 
 // Categories that are scheduled events (shown in "Classes & meetings")
 const scheduleCategories = ["Meeting", "Class", "Exam"];
@@ -81,6 +77,7 @@ function formatDate(dateString) {
 // Save tasks to localStorage
 function saveTasks() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
+  scheduleAlarmSync();
 }
 
 // Today's date as YYYY-MM-DD (same format that is saved in tasks)
@@ -91,7 +88,7 @@ function todayString() {
   return d.getFullYear() + "-" + month + "-" + day;
 }
 
-// Returns "overdue", "live", "soon", "today" or "" for a task
+// Returns "overdue", "soon", "today" or "" for a task
 function getDueStatus(task) {
   if (task.done || !task.date) {
     return "";
@@ -102,12 +99,8 @@ function getDueStatus(task) {
   }
   if (task.date === today) {
     const now = nowTimeString();
-    const finish = task.endTime || task.startTime;
-    if (finish && now > finish) {
+    if (task.startTime && now > task.startTime) {
       return "overdue";
-    }
-    if (task.startTime && task.endTime && now >= task.startTime) {
-      return "live";
     }
     if (task.startTime) {
       const mins = minutesBetween(now, task.startTime);
@@ -127,29 +120,34 @@ function whenKey(task) {
 
 // ---------- Add, edit, toggle, delete ----------
 
-function addTask(title, date, startTime, endTime, category, priority, notes) {
+function addTask(title, date, startTime, alarm, category, notes) {
   tasks.push({
     id: Date.now(),
     title: title,
     date: date,
     startTime: startTime,
-    endTime: endTime,
+    alarm: alarm,
+    alarmRang: false,
     category: category,
-    priority: priority,
     notes: notes,
     done: false
   });
 }
 
-function updateTask(id, title, date, startTime, endTime, category, priority, notes) {
+function updateTask(id, title, date, startTime, alarm, category, notes) {
   tasks = tasks.map(function (task) {
     if (task.id === id) {
       task.title = title;
       task.date = date;
       task.startTime = startTime;
-      task.endTime = endTime;
+      // Re-arm the alarm if it was changed or moved to a new time
+      if (task.alarm !== alarm || task.date !== date || task.startTime !== startTime) {
+        task.alarmRang = false;
+        delete task.snoozeUntil;
+      }
+      task.alarm = alarm;
+      delete task.endTime; // end time is no longer used
       task.category = category;
-      task.priority = priority;
       task.notes = notes;
     }
     return task;
@@ -157,6 +155,9 @@ function updateTask(id, title, date, startTime, endTime, category, priority, not
 }
 
 function toggleTask(id) {
+  if (ringingId === id) {
+    closeAlarm();
+  }
   tasks = tasks.map(function (task) {
     if (task.id === id) {
       task.done = !task.done;
@@ -187,9 +188,13 @@ function startEdit(task) {
   titleInput.value = task.title;
   datePicker.setDate(task.date || null);
   startPicker.setDate(task.startTime || null);
-  endPicker.setDate(task.endTime || null);
+  alarmInput.checked = !!task.alarm;
+  updateAlarmNote();
   categoryInput.value = task.category || "Office work";
-  priorityInput.value = task.priority;
+  if (categoryInput.selectedIndex === -1) {
+    // Old categories that no longer exist (e.g. "Deadline") fall back to Office work
+    categoryInput.value = "Office work";
+  }
   notesInput.value = task.notes || "";
   submitBtn.textContent = "Save changes";
   cancelBtn.classList.remove("hidden");
@@ -203,10 +208,9 @@ function resetForm() {
   form.reset();
   datePicker.clear();
   startPicker.clear();
-  endPicker.clear();
-  priorityInput.value = "Medium";
   submitBtn.textContent = "Add task";
   cancelBtn.classList.add("hidden");
+  updateAlarmNote();
 }
 
 // ---------- Filter, search and sort ----------
@@ -218,15 +222,6 @@ function sortTasks(list) {
   if (mode === "due") {
     // Tasks without a date go to the end
     sorted.sort(function (a, b) {
-      return whenKey(a).localeCompare(whenKey(b));
-    });
-  } else if (mode === "priority") {
-    // High first; same priority -> soonest due date first
-    sorted.sort(function (a, b) {
-      const diff = priorityRank[a.priority] - priorityRank[b.priority];
-      if (diff !== 0) {
-        return diff;
-      }
       return whenKey(a).localeCompare(whenKey(b));
     });
   } else if (mode === "oldest") {
@@ -284,8 +279,14 @@ function updateStats() {
   document.getElementById("stat-done").textContent = done;
   document.getElementById("stat-pending").textContent = total - done;
   document.getElementById("stat-overdue").textContent = overdue;
+  document.getElementById("stat-overdue").parentElement.classList.toggle("has-overdue", overdue > 0);
   document.getElementById("progress-bar").style.width = percent + "%";
   document.getElementById("progress-text").textContent = percent + "% completed";
+
+  // Show a check mark beside Total once every task is done
+  const allDone = total > 0 && done === total;
+  document.getElementById("complete-check").classList.toggle("hidden", !allDone);
+  document.getElementById("stat-total-box").classList.toggle("complete", allDone);
 }
 
 function createBadge(text, extraClass) {
@@ -308,7 +309,7 @@ function renderTasks() {
 
   visibleTasks.forEach(function (task) {
     const li = document.createElement("li");
-    li.className = "task-item priority-" + task.priority + (task.done ? " done" : "");
+    li.className = "task-item" + (task.done ? " done" : "");
 
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
@@ -332,8 +333,6 @@ function renderTasks() {
     const status = getDueStatus(task);
     if (status === "overdue") {
       meta.appendChild(createBadge("Overdue", "overdue"));
-    } else if (status === "live") {
-      meta.appendChild(createBadge("In progress", "live"));
     } else if (status === "soon") {
       meta.appendChild(createBadge("Starts in " + minutesBetween(nowTimeString(), task.startTime) + " min", "soon"));
     } else if (status === "today") {
@@ -343,11 +342,11 @@ function renderTasks() {
     let whenText = task.date ? formatDate(task.date) : "No date";
     if (task.startTime) {
       whenText += ", " + formatTime(task.startTime);
-      if (task.endTime) {
-        whenText += " – " + formatTime(task.endTime);
-      }
     }
-    meta.appendChild(document.createTextNode(whenText + " | " + task.priority));
+    meta.appendChild(document.createTextNode(whenText));
+    if (task.alarm && task.startTime) {
+      meta.appendChild(createBadge("\u{1F514} " + formatTime(task.startTime), "alarm" + (task.alarmRang || task.done ? " off" : "")));
+    }
 
     info.appendChild(title);
     info.appendChild(meta);
@@ -399,20 +398,27 @@ form.addEventListener("submit", function (event) {
   }
 
   const startTime = startInput.value;
-  const endTime = endInput.value;
-  if (startTime && endTime && endTime <= startTime) {
-    alert("End time must be after the start time.");
+  const alarm = alarmInput.checked;
+  if (alarm && !startTime) {
+    alert("Please pick a start time for the alarm.");
+    startPicker.open();
     return;
   }
-  if ((startTime || endTime) && !dateInput.value) {
-    alert("Please pick a date for this time.");
+  if (!dateInput.value) {
+    alert("Please pick a date for this task.");
+    datePicker.open();
     return;
   }
 
+  if (alarm) {
+    unlockAudio();
+    enableBackgroundAlarms();
+  }
+
   if (editingId !== null) {
-    updateTask(editingId, title, dateInput.value, startTime, endTime, categoryInput.value, priorityInput.value, notesInput.value.trim());
+    updateTask(editingId, title, dateInput.value, startTime, alarm, categoryInput.value, notesInput.value.trim());
   } else {
-    addTask(title, dateInput.value, startTime, endTime, categoryInput.value, priorityInput.value, notesInput.value.trim());
+    addTask(title, dateInput.value, startTime, alarm, categoryInput.value, notesInput.value.trim());
   }
 
   saveTasks();
@@ -470,8 +476,305 @@ themeBtn.addEventListener("click", function () {
   applyTheme(isDark ? "light" : "dark");
 });
 
+// ---------- Alarm ----------
+
+const alarmModal = document.getElementById("alarm-modal");
+const alarmTaskText = document.getElementById("alarm-task");
+const alarmTimeText = document.getElementById("alarm-time");
+let audioCtx = null;
+let beepTimer = null;
+let ringingId = null;
+const alarmQueue = [];       // other alarms waiting while one is ringing
+const MISSED_LIMIT_MS = 10 * 60 * 1000; // don't ring alarms more than 10 min late
+
+// Browsers only allow sound after the user has interacted with the page
+function unlockAudio() {
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) {
+    return;
+  }
+  if (!audioCtx) {
+    audioCtx = new Ctx();
+  }
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+}
+document.addEventListener("click", unlockAudio);
+document.addEventListener("keydown", unlockAudio);
+
+
+// Play one "beep-beep-beep" pattern
+function beepPattern() {
+  if (!audioCtx) {
+    return;
+  }
+  const start = audioCtx.currentTime;
+  for (let i = 0; i < 3; i++) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "square";
+    osc.frequency.value = 880;
+    const t = start + i * 0.25;
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + 0.2);
+  }
+}
+
+function alarmTimeMs(task) {
+  const d = task.date.split("-"), t = task.startTime.split(":");
+  const base = new Date(Number(d[0]), Number(d[1]) - 1, Number(d[2]), Number(t[0]), Number(t[1])).getTime();
+  return task.snoozeUntil || base;
+}
+
+function ringAlarm(task) {
+  ringingId = task.id;
+  alarmTaskText.textContent = task.title;
+  alarmTimeText.textContent = formatDate(task.date) + ", " + formatTime(task.startTime);
+  alarmModal.classList.remove("hidden");
+  unlockAudio();
+  beepPattern();
+  clearInterval(beepTimer);
+  beepTimer = setInterval(beepPattern, 1200);
+  if (navigator.vibrate) {
+    navigator.vibrate([400, 200, 400, 200, 400]);
+  }
+  if ("Notification" in window && Notification.permission === "granted") {
+    const options = {
+      body: "Starts now – " + formatTime(task.startTime),
+      tag: "task-" + task.id,
+      icon: "/icon.svg"
+    };
+    if (swRegistration) {
+      swRegistration.showNotification("\u{1F514} " + task.title, options);
+    } else {
+      try {
+        new Notification("\u{1F514} " + task.title, options);
+      } catch (e) { /* some browsers only allow notifications from a service worker */ }
+    }
+  }
+}
+
+function closeAlarm() {
+  clearInterval(beepTimer);
+  beepTimer = null;
+  ringingId = null;
+  alarmModal.classList.add("hidden");
+  if (alarmQueue.length) {
+    const next = tasks.find(function (t) { return t.id === alarmQueue.shift(); });
+    if (next) {
+      ringAlarm(next);
+    }
+  }
+}
+
+// Look for alarms that are due
+function checkAlarms() {
+  const now = Date.now();
+  let changed = false;
+  tasks.forEach(function (task) {
+    if (!task.alarm || task.alarmRang || task.done || !task.date || !task.startTime) {
+      return;
+    }
+    const when = alarmTimeMs(task);
+    if (now < when) {
+      return;
+    }
+    task.alarmRang = true;
+    delete task.snoozeUntil;
+    changed = true;
+    if (now - when > MISSED_LIMIT_MS) {
+      return; // too late, the page was closed when it was due
+    }
+    if (ringingId === null) {
+      ringAlarm(task);
+    } else if (ringingId !== task.id && !alarmQueue.includes(task.id)) {
+      alarmQueue.push(task.id);
+    }
+  });
+  if (changed) {
+    saveTasks();
+    renderTasks();
+  }
+}
+
+document.getElementById("alarm-stop").addEventListener("click", closeAlarm);
+document.getElementById("alarm-snooze").addEventListener("click", function () {
+  const task = tasks.find(function (t) { return t.id === ringingId; });
+  if (task) {
+    task.alarmRang = false;
+    task.snoozeUntil = Date.now() + 5 * 60 * 1000;
+    saveTasks();
+    renderTasks();
+  }
+  closeAlarm();
+});
+
+// ---------- Background alarms (work even when the browser is closed) ----------
+// The browser registers for push notifications and sends the upcoming alarms
+// to the server. A scheduled server job sends a notification when each one is due.
+
+const alarmNote = document.getElementById("alarm-note");
+let swRegistration = null;
+let syncTimer = null;
+
+const pushSupported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const isStandalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+
+function urlBase64ToUint8Array(base64) {
+  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
+  const raw = atob((base64 + padding).replace(/-/g, "+").replace(/_/g, "/"));
+  return Uint8Array.from(raw, function (c) { return c.charCodeAt(0); });
+}
+
+// Short status message shown under the start time when the alarm is switched on
+function updateAlarmNote() {
+  if (!alarmInput.checked) {
+    alarmNote.classList.add("hidden");
+    return;
+  }
+  let text;
+  let ok = false;
+  if (!pushSupported) {
+    text = isIOS && !isStandalone
+      ? "On iPhone/iPad: tap Share → “Add to Home Screen” and open the app from there to get alarms when it’s closed."
+      : "This browser can’t show alarms when closed. The alarm rings while this page is open.";
+  } else if (Notification.permission === "denied") {
+    text = "Notifications are blocked. Allow them in your browser settings to get alarms when the browser is closed.";
+  } else if (Notification.permission === "granted") {
+    text = "✓ You’ll get a notification at the start time, even if the browser is closed.";
+    ok = true;
+  } else {
+    text = "When you save, allow notifications so the alarm works even with the browser closed.";
+  }
+  alarmNote.textContent = text;
+  alarmNote.classList.toggle("ok", ok);
+  alarmNote.classList.remove("hidden");
+}
+alarmInput.addEventListener("change", updateAlarmNote);
+
+async function registerServiceWorker() {
+  if (!pushSupported) {
+    return null;
+  }
+  try {
+    swRegistration = await navigator.serviceWorker.register("/sw.js");
+    await navigator.serviceWorker.ready;
+  } catch (e) {
+    console.warn("Service worker registration failed", e);
+    swRegistration = null;
+  }
+  return swRegistration;
+}
+
+// Ask for permission (needs a click/tap) and subscribe this device to push
+async function enableBackgroundAlarms() {
+  if (!pushSupported) {
+    updateAlarmNote();
+    return;
+  }
+  try {
+    // requestPermission must be called straight away inside the user's click
+    const permission = Notification.permission === "default"
+      ? await Notification.requestPermission()
+      : Notification.permission;
+    updateAlarmNote();
+    if (permission !== "granted") {
+      return;
+    }
+    const reg = swRegistration || await registerServiceWorker();
+    if (!reg) {
+      return;
+    }
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      const res = await fetch("/api/push/key");
+      const data = await res.json();
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(data.publicKey)
+      });
+    }
+    await syncAlarms();
+  } catch (e) {
+    console.warn("Could not enable background alarms", e);
+  }
+}
+
+function scheduleAlarmSync() {
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncAlarms, 400);
+}
+
+// Send this device's upcoming alarms to the server
+async function syncAlarms() {
+  if (!swRegistration || Notification.permission !== "granted") {
+    return;
+  }
+  try {
+    const sub = await swRegistration.pushManager.getSubscription();
+    if (!sub) {
+      return;
+    }
+    const now = Date.now();
+    const upcoming = tasks
+      .filter(function (t) {
+        return t.alarm && !t.done && !t.alarmRang && t.date && t.startTime;
+      })
+      .map(function (t) {
+        return {
+          taskId: String(t.id),
+          title: t.title,
+          body: "Starts now – " + formatTime(t.startTime) + (t.category ? " · " + t.category : ""),
+          fireAt: new Date(alarmTimeMs(t)).toISOString()
+        };
+      })
+      .filter(function (a) { return new Date(a.fireAt).getTime() > now; });
+
+    await fetch("/api/push/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subscription: sub.toJSON(), alarms: upcoming }),
+      keepalive: true
+    });
+  } catch (e) {
+    console.warn("Alarm sync failed", e);
+  }
+}
+
+// A push arrived while the page is open: ring the in-page alarm too
+if (pushSupported) {
+  navigator.serviceWorker.addEventListener("message", function (event) {
+    if (!event.data || event.data.type !== "alarm") {
+      return;
+    }
+    const task = tasks.find(function (t) { return String(t.id) === String(event.data.taskId); });
+    if (!task || task.done || ringingId === task.id) {
+      return;
+    }
+    if (!task.alarmRang) {
+      task.alarmRang = true;
+      delete task.snoozeUntil;
+      saveTasks();
+      renderTasks();
+      ringAlarm(task);
+    }
+  });
+}
+
 // Start the app
 applyTheme(localStorage.getItem("theme") || "light");
 renderTasks();
-// Refresh "Starts in", "In progress" and overdue labels every minute
+// Refresh "Starts in" and overdue labels every minute
 setInterval(renderTasks, 60000);
+// Register for background alarms, then send the current alarm list to the server
+registerServiceWorker().then(syncAlarms);
+// Check alarms every few seconds
+checkAlarms();
+setInterval(checkAlarms, 5000);

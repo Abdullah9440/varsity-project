@@ -630,3 +630,35 @@ body.dark .alarm-toggle:has(input:checked) {
 body.dark .alarm-note.ok {
   color: #86efac;
 }
+
+/* Installed phone app only: black and white look (normal browser is unchanged) */
+@media (display-mode: standalone) {
+  html {
+    filter: grayscale(1); /* turns any remaining colored badges into shades of gray */
+  }
+
+  :root {
+    --bg: #ffffff;
+    --card: #ffffff;
+    --text: #000000;
+    --muted: #555555;
+    --border: #d4d4d4;
+    --primary: #000000;
+    --field: #ffffff;
+  }
+
+  body.dark {
+    --bg: #000000;
+    --card: #111111;
+    --text: #ffffff;
+    --muted: #aaaaaa;
+    --border: #333333;
+    --primary: #ffffff;
+    --field: #000000;
+  }
+
+  body.dark .add-btn,
+  body.dark .filter-btn.active {
+    color: #000000;
+  }
+}

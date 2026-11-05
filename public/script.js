@@ -77,7 +77,6 @@ function formatDate(dateString) {
 // Save tasks to localStorage
 function saveTasks() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
-  scheduleAlarmSync();
 }
 
 // Today's date as YYYY-MM-DD (same format that is saved in tasks)
@@ -189,7 +188,6 @@ function startEdit(task) {
   datePicker.setDate(task.date || null);
   startPicker.setDate(task.startTime || null);
   alarmInput.checked = !!task.alarm;
-  updateAlarmNote();
   categoryInput.value = task.category || "Office work";
   if (categoryInput.selectedIndex === -1) {
     // Old categories that no longer exist (e.g. "Deadline") fall back to Office work
@@ -210,7 +208,6 @@ function resetForm() {
   startPicker.clear();
   submitBtn.textContent = "Add task";
   cancelBtn.classList.add("hidden");
-  updateAlarmNote();
 }
 
 // ---------- Filter, search and sort ----------
@@ -412,7 +409,6 @@ form.addEventListener("submit", function (event) {
 
   if (alarm) {
     unlockAudio();
-    enableBackgroundAlarms();
   }
 
   if (editingId !== null) {
@@ -476,7 +472,7 @@ themeBtn.addEventListener("click", function () {
   applyTheme(isDark ? "light" : "dark");
 });
 
-// ---------- Alarm ----------
+// ---------- Alarm (rings only while the page is open) ----------
 
 const alarmModal = document.getElementById("alarm-modal");
 const alarmTaskText = document.getElementById("alarm-task");
@@ -543,20 +539,6 @@ function ringAlarm(task) {
   if (navigator.vibrate) {
     navigator.vibrate([400, 200, 400, 200, 400]);
   }
-  if ("Notification" in window && Notification.permission === "granted") {
-    const options = {
-      body: "Starts now – " + formatTime(task.startTime),
-      tag: "task-" + task.id,
-      icon: "/icon.svg"
-    };
-    if (swRegistration) {
-      swRegistration.showNotification("\u{1F514} " + task.title, options);
-    } else {
-      try {
-        new Notification("\u{1F514} " + task.title, options);
-      } catch (e) { /* some browsers only allow notifications from a service worker */ }
-    }
-  }
 }
 
 function closeAlarm() {
@@ -614,163 +596,22 @@ document.getElementById("alarm-snooze").addEventListener("click", function () {
   closeAlarm();
 });
 
-// ---------- Background alarms (work even when the browser is closed) ----------
-// The browser registers for push notifications and sends the upcoming alarms
-// to the server. A scheduled server job sends a notification when each one is due.
+// ---------- Service worker (offline support and "Install app") ----------
 
-const alarmNote = document.getElementById("alarm-note");
-let swRegistration = null;
-let syncTimer = null;
-
-const pushSupported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
-const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
-  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-const isStandalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
-
-function urlBase64ToUint8Array(base64) {
-  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
-  const raw = atob((base64 + padding).replace(/-/g, "+").replace(/_/g, "/"));
-  return Uint8Array.from(raw, function (c) { return c.charCodeAt(0); });
-}
-
-// Short status message shown under the start time when the alarm is switched on
-function updateAlarmNote() {
-  if (!alarmInput.checked) {
-    alarmNote.classList.add("hidden");
-    return;
-  }
-  let text;
-  let ok = false;
-  if (!pushSupported) {
-    text = isIOS && !isStandalone
-      ? "On iPhone/iPad: tap Share → “Add to Home Screen” and open the app from there to get alarms when it’s closed."
-      : "This browser can’t show alarms when closed. The alarm rings while this page is open.";
-  } else if (Notification.permission === "denied") {
-    text = "Notifications are blocked. Allow them in your browser settings to get alarms when the browser is closed.";
-  } else if (Notification.permission === "granted") {
-    text = "✓ You’ll get a notification at the start time, even if the browser is closed.";
-    ok = true;
-  } else {
-    text = "When you save, allow notifications so the alarm works even with the browser closed.";
-  }
-  alarmNote.textContent = text;
-  alarmNote.classList.toggle("ok", ok);
-  alarmNote.classList.remove("hidden");
-}
-alarmInput.addEventListener("change", updateAlarmNote);
-
-// The service worker is registered on every browser that supports it (not only
-// browsers with push), because Chrome needs it to offer "Install app".
+// The service worker is registered on every browser that supports it,
+// because Chrome needs it to offer "Install app".
 async function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) {
-    return null;
+    return;
   }
   try {
     // updateViaCache "none" makes the browser always check the server for a new sw.js
-    swRegistration = await navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" });
+    const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" });
     // Look for a newer service worker on every page load
-    swRegistration.update().catch(function () {});
-    await navigator.serviceWorker.ready;
+    registration.update().catch(function () {});
   } catch (e) {
     console.warn("Service worker registration failed", e);
-    swRegistration = null;
   }
-  return swRegistration;
-}
-
-// Ask for permission (needs a click/tap) and subscribe this device to push
-async function enableBackgroundAlarms() {
-  if (!pushSupported) {
-    updateAlarmNote();
-    return;
-  }
-  try {
-    // requestPermission must be called straight away inside the user's click
-    const permission = Notification.permission === "default"
-      ? await Notification.requestPermission()
-      : Notification.permission;
-    updateAlarmNote();
-    if (permission !== "granted") {
-      return;
-    }
-    const reg = swRegistration || await registerServiceWorker();
-    if (!reg) {
-      return;
-    }
-    let sub = await reg.pushManager.getSubscription();
-    if (!sub) {
-      const res = await fetch("/api/push/key");
-      const data = await res.json();
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(data.publicKey)
-      });
-    }
-    await syncAlarms();
-  } catch (e) {
-    console.warn("Could not enable background alarms", e);
-  }
-}
-
-function scheduleAlarmSync() {
-  clearTimeout(syncTimer);
-  syncTimer = setTimeout(syncAlarms, 400);
-}
-
-// Send this device's upcoming alarms to the server
-async function syncAlarms() {
-  if (!pushSupported || !swRegistration || Notification.permission !== "granted") {
-    return;
-  }
-  try {
-    const sub = await swRegistration.pushManager.getSubscription();
-    if (!sub) {
-      return;
-    }
-    const now = Date.now();
-    const upcoming = tasks
-      .filter(function (t) {
-        return t.alarm && !t.done && !t.alarmRang && t.date && t.startTime;
-      })
-      .map(function (t) {
-        return {
-          taskId: String(t.id),
-          title: t.title,
-          body: "Starts now – " + formatTime(t.startTime) + (t.category ? " · " + t.category : ""),
-          fireAt: new Date(alarmTimeMs(t)).toISOString()
-        };
-      })
-      .filter(function (a) { return new Date(a.fireAt).getTime() > now; });
-
-    await fetch("/api/push/sync", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ subscription: sub.toJSON(), alarms: upcoming }),
-      keepalive: true
-    });
-  } catch (e) {
-    console.warn("Alarm sync failed", e);
-  }
-}
-
-// A push arrived while the page is open: ring the in-page alarm too
-if (pushSupported) {
-  navigator.serviceWorker.addEventListener("message", function (event) {
-    if (!event.data || event.data.type !== "alarm") {
-      return;
-    }
-    const task = tasks.find(function (t) { return String(t.id) === String(event.data.taskId); });
-    if (!task || task.done || ringingId === task.id) {
-      return;
-    }
-    if (!task.alarmRang) {
-      task.alarmRang = true;
-      delete task.snoozeUntil;
-      saveTasks();
-      renderTasks();
-      ringAlarm(task);
-    }
-  });
 }
 
 // Start the app
@@ -778,8 +619,7 @@ applyTheme(localStorage.getItem("theme") || "light");
 renderTasks();
 // Refresh "Starts in" and overdue labels every minute
 setInterval(renderTasks, 60000);
-// Register for background alarms, then send the current alarm list to the server
-registerServiceWorker().then(syncAlarms);
+registerServiceWorker();
 // Check alarms every few seconds
 checkAlarms();
 setInterval(checkAlarms, 5000);

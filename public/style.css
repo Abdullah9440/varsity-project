@@ -615,22 +615,6 @@ body.dark .alarm-toggle:has(input:checked) {
   75%      { transform: rotate(18deg); }
 }
 
-/* Status line under the alarm toggle */
-.alarm-note {
-  flex: 1 1 100%;
-  margin: -2px 0 0;
-  font-size: 0.82rem;
-  color: var(--muted);
-}
-
-.alarm-note.ok {
-  color: #15803d;
-}
-
-body.dark .alarm-note.ok {
-  color: #86efac;
-}
-
 /* Install bar: slim, full-width bar fixed at the very top of the screen.
    Nothing is placed at the bottom, so it never overlaps the Netlify badge. */
 :root {

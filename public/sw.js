@@ -1,10 +1,10 @@
 // Service worker for Habhit:
 // - makes the app installable (it has a fetch handler and works offline)
 // - keeps itself up to date (skipWaiting + clients.claim + old cache cleanup)
-// - shows task alarms as notifications, even when the site is closed
+// Notifications are removed for now and can be added back later.
 
 // Change this version whenever the caching logic changes, so old caches are removed.
-const CACHE_VERSION = "habhit-v3";
+const CACHE_VERSION = "habhit-v4";
 
 // Basic files needed to open the app offline
 const APP_SHELL = [
@@ -57,7 +57,6 @@ self.addEventListener("fetch", function (event) {
   // Only handle this site's own files; never cache the API or the service worker itself
   if (url.origin !== self.location.origin ||
       url.pathname.startsWith("/api/") ||
-      url.pathname.startsWith("/.netlify/") ||
       url.pathname === "/sw.js") {
     return;
   }
@@ -80,54 +79,6 @@ self.addEventListener("fetch", function (event) {
         }
         return Response.error();
       });
-    })
-  );
-});
-
-self.addEventListener("push", function (event) {
-  let data = {};
-  try {
-    data = event.data ? event.data.json() : {};
-  } catch (e) {
-    data = { title: event.data ? event.data.text() : "Task alarm" };
-  }
-
-  const title = "\u{1F514} " + (data.title || "Task alarm");
-  const options = {
-    body: data.body || "Your task is starting now",
-    tag: "task-" + (data.taskId || "alarm"),
-    renotify: true,
-    requireInteraction: true,          // stays on screen until the user reacts
-    vibrate: [500, 200, 500, 200, 500, 200, 500],
-    icon: "/icon.svg",
-    badge: "/icon.svg",
-    data: { taskId: data.taskId, url: "/" },
-    actions: [{ action: "open", title: "Open" }]
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(title, options).then(function () {
-      // If the app is open in a tab, let it ring the in-page alarm too
-      return self.clients.matchAll({ type: "window", includeUncontrolled: true });
-    }).then(function (clients) {
-      clients.forEach(function (client) {
-        client.postMessage({ type: "alarm", taskId: data.taskId });
-      });
-    })
-  );
-});
-
-self.addEventListener("notificationclick", function (event) {
-  event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || "/";
-  event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (clients) {
-      for (const client of clients) {
-        if ("focus" in client) {
-          return client.focus();
-        }
-      }
-      return self.clients.openWindow(url);
     })
   );
 });

@@ -21,12 +21,12 @@ const APP_SHELL = [
 
 // Install: cache the app shell, then activate the new worker right away
 // instead of waiting for every open tab to close.
-self.addEventListener("install", function (event) {
+self.addEventListener("install",function (event){
   event.waitUntil(
     caches.open(CACHE_VERSION)
-      .then(function (cache) { return cache.addAll(APP_SHELL); })
-      .catch(function (e) { console.warn("App shell caching failed", e); })
-      .then(function () { return self.skipWaiting(); })
+      .then(function (cache) { return cache.addAll(APP_SHELL);})
+      .catch(function (e) { console.warn("App shell caching failed",e);})
+      .then(function () { return self.skipWaiting();})
   );
 });
 

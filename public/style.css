@@ -29,10 +29,11 @@ html,
 body {
   max-width: 100%;
   overflow-x: hidden; /* never let anything push the page wider than the screen */
+  
 }
 
 body {
-  font-family: "Segoe UI", Arial, sans-serif;
+  font-family:sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Library Management System</title>
+  <!-- Google Fonts (optional: the app still works offline with fallback fonts) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- =====================================================
+       PAGE 1: LOGIN PAGE
+       ===================================================== -->
+  <section id="loginPage" class="page login-page">
+    <div class="login-brand">
+      <div class="logo logo-lg">SL</div>
+      <h1>Student <span>Library</span></h1>
+      <p>Borrow books, track due dates, and manage the library in one simple place.</p>
+    </div>
+
+    <div class="card login-card">
+      <!-- Student / Admin switch -->
+      <div class="role-switch">
+        <button type="button" id="studentTab" class="role-btn active" onclick="switchRole('student')">Student</button>
+        <button type="button" id="adminTab" class="role-btn" onclick="switchRole('admin')">Admin</button>
+      </div>
+
+      <!-- Student login form -->
+      <form id="studentLoginForm" class="form">
+        <h2>Student login</h2>
+        <label>Student ID
+          <input type="text" id="loginStudentId" placeholder="e.g. S1001" required />
+        </label>
+        <label>Password
+          <input type="password" id="loginStudentPassword" placeholder="Your password" required />
+        </label>
+        <p id="studentLoginMsg" class="message"></p>
+        <button type="submit" class="btn btn-primary btn-block">Log in</button>
+        <p class="form-switch">No account yet?
+          <button type="button" class="link-btn" onclick="showForm('signup')">Create an account</button>
+        </p>
+      </form>
+
+      <!-- Student sign-up form -->
+      <form id="signupForm" class="form hidden">
+        <h2>Create a student account</h2>
+        <label>Full name
+          <input type="text" id="signupName" placeholder="e.g. Kazi Abdullah" required />
+        </label>
+        <label>Student ID
+          <input type="text" id="signupStudentId" placeholder="e.g. S1001" required />
+        </label>
+        <label>Password
+          <input type="password" id="signupPassword" placeholder="At least 4 characters" required />
+        </label>
+        <label>Confirm password
+          <input type="password" id="signupConfirm" placeholder="Type the password again" required />
+        </label>
+        <p id="signupMsg" class="message"></p>
+        <button type="submit" class="btn btn-primary btn-block">Create account</button>
+        <p class="form-switch">Already have an account?
+          <button type="button" class="link-btn" onclick="showForm('studentLogin')">Log in</button>
+        </p>
+      </form>
+
+      <!-- Admin login form -->
+      <form id="adminLoginForm" class="form hidden">
+        <h2>Admin login</h2>
+        <label>Username
+          <input type="text" id="adminUsername" placeholder="admin" required />
+        </label>
+        <label>Password
+          <input type="password" id="adminPassword" placeholder="admin123" required />
+        </label>
+        <p id="adminLoginMsg" class="message"></p>
+        <button type="submit" class="btn btn-primary btn-block">Log in as admin</button>
+        <p class="hint">Demo account: <strong>admin</strong> / <strong>admin123</strong></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- =====================================================
+       PAGE 2: STUDENT DASHBOARD
+       ===================================================== -->
+  <section id="studentPage" class="page hidden">
+    <header class="topbar">
+      <div class="brand"><div class="logo">SL</div><span>Student Library</span></div>
+      <div class="topbar-right">
+        <span id="studentWelcome" class="welcome"></span>
+        <button type="button" class="btn btn-light" onclick="logout()">Log out</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <h1 class="page-title">Student dashboard</h1>
+
+      <!-- 2 stat cards: Total Subjects, Available Copies -->
+      <div id="studentStats" class="stats"></div>
+
+      <!-- My Library: the books this student has borrowed -->
+      <div class="card">
+        <h2>My Library</h2>
+        <p class="note">Please return within 15 days.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Subject</th><th>Borrow date</th><th>Due date</th><th></th></tr>
+            </thead>
+            <tbody id="myLibraryTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Book List -->
+      <div class="card">
+        <h2>Book List</h2>
+        <p class="hint">You can borrow up to 2 books at the same time.</p>
+        <p id="borrowMsg" class="message"></p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Subject</th><th>Author</th><th>Available Copies</th><th></th></tr>
+            </thead>
+            <tbody id="studentBookTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </section>
+
+  <!-- =====================================================
+       PAGE 3: ADMIN DASHBOARD
+       ===================================================== -->
+  <section id="adminPage" class="page hidden">
+    <header class="topbar">
+      <div class="brand"><div class="logo">SL</div><span>Student Library <em>Admin</em></span></div>
+      <div class="topbar-right">
+        <span class="welcome">Logged in as admin</span>
+        <button type="button" class="btn btn-light" onclick="logout()">Log out</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <h1 class="page-title">Admin dashboard</h1>
+
+      <!-- 3 stat cards: Total Subjects, Available Copies, Pending Return Requests -->
+      <div id="adminStats" class="stats"></div>
+
+      <!-- Return Requests -->
+      <div class="card">
+        <h2>Return Requests</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Student name</th><th>Subject</th><th></th></tr>
+            </thead>
+            <tbody id="requestTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Borrowed Books: which student has which book right now -->
+      <div class="card">
+        <h2>Borrowed Books</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Student ID</th><th>Student name</th><th>Subject</th><th>Borrow date</th></tr>
+            </thead>
+            <tbody id="borrowedTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Add Book -->
+      <div class="card">
+        <h2>Add Book</h2>
+        <form id="addBookForm" class="add-book-form">
+          <input type="text" id="bookTitle" placeholder="Subject" required />
+          <input type="text" id="bookAuthor" placeholder="Author" required />
+          <input type="number" id="bookCopies" placeholder="Copies" min="1" value="1" required />
+          <button type="submit" class="btn btn-primary">Add Book</button>
+        </form>
+        <p id="addBookMsg" class="message"></p>
+      </div>
+
+      <!-- Book List -->
+      <div class="card">
+        <h2>Book List</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Subject</th><th>Author</th><th>Total Copies</th><th>Available Copies</th><th></th></tr>
+            </thead>
+            <tbody id="adminBookTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </section>
+
+  <!-- Small pop-up message at the bottom of the screen -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

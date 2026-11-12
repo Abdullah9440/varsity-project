@@ -1,0 +1,371 @@
+/* =========================================================
+   Student Library Management System - style.css
+   Classic theme: deep black, charcoal / ash gray, off-white and soft gold
+   ========================================================= */
+
+/* ---------- 1. Colors and sizes (change them here only) ---------- */
+:root {
+  /* base colors */
+  --black: #0b0b0b;
+  --ash: #2a2a2a;
+  --charcoal: #1c1c1c;
+  --text: #f3efe6;          /* off-white text on dark */
+  --muted: #a7a197;         /* soft grey helper text */
+  --ink: #0b0b0b;           /* black text on light / gold surfaces */
+
+  /* gold accent */
+  --gold-1: #b8913f;
+  --gold-2: #e6c875;
+  --gold-text: #e6c875;     /* gold text on dark */
+  --gradient-gold: linear-gradient(135deg, #b8913f 0%, #e6c875 100%);
+  --gold-line: rgba(230, 200, 117, 0.22);   /* thin gold border */
+  --gold-soft: rgba(230, 200, 117, 0.12);   /* light gold background */
+  --glow: 0 6px 20px rgba(184, 145, 63, 0.28);
+
+  /* backgrounds */
+  --page-bg: linear-gradient(160deg, #0b0b0b 0%, #2a2a2a 100%);
+  --surface: linear-gradient(160deg, #232323 0%, #111111 100%);       /* dark cards */
+  --surface-light: linear-gradient(160deg, #f6f3ec 0%, #d8d5ce 100%); /* light boxes */
+  --field: linear-gradient(180deg, #161616 0%, #1d1d1d 100%);         /* input fields */
+  --line: rgba(255, 255, 255, 0.08);        /* thin row lines */
+
+  /* status colors */
+  --danger: #e57b72;
+  --danger-soft: rgba(229, 123, 114, 0.12);
+  --success: #9fcf9f;
+  --success-soft: rgba(159, 207, 159, 0.12);
+
+  --radius: 16px;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --shadow-hover: 0 14px 38px rgba(0, 0, 0, 0.5);
+  --serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+}
+
+/* ---------- 2. Basic reset ---------- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--page-bg);
+  background-attachment: fixed;
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+h1, h2 { font-family: var(--serif); font-weight: 600; letter-spacing: 0.01em; }
+h2 { font-size: 1.5rem; margin-bottom: 12px; }
+
+.hidden { display: none !important; }
+
+/* ---------- 3. Buttons ---------- */
+.btn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s, border-color 0.2s, background 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+.btn:hover:not(:disabled) { transform: translateY(-1px); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.btn-primary { background: var(--gradient-gold); color: var(--ink); box-shadow: var(--glow); }
+.btn-primary:hover:not(:disabled) { box-shadow: 0 10px 26px rgba(230, 200, 117, 0.35); }
+
+.btn-light { background: transparent; color: var(--text); border: 1px solid var(--gold-line); }
+.btn-light:hover:not(:disabled) { border-color: var(--gold-2); color: var(--gold-text); }
+
+.btn-danger { background: var(--danger-soft); color: var(--danger); border: 1px solid rgba(229, 123, 114, 0.3); }
+.btn-danger:hover:not(:disabled) { background: var(--danger); color: var(--ink); }
+
+.btn-small { padding: 7px 14px; font-size: 0.82rem; }
+.btn-block { width: 100%; }
+
+.link-btn {
+  background: none; border: none; font: inherit;
+  color: var(--gold-text); font-weight: 600; cursor: pointer;
+}
+.link-btn:hover { text-decoration: underline; }
+
+/* ---------- 4. Cards ---------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--gold-line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  margin-bottom: 20px;
+  transition: box-shadow 0.25s, border-color 0.25s;
+}
+.card:hover { box-shadow: var(--shadow-hover); border-color: rgba(230, 200, 117, 0.35); }
+
+/* ---------- 5. Forms ---------- */
+.form { display: flex; flex-direction: column; gap: 14px; }
+.form h2 { font-size: 1.8rem; margin-bottom: 2px; }
+
+label { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; font-weight: 600; color: var(--muted); }
+
+input {
+  font: inherit;
+  font-weight: 400;
+  color: var(--text);
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--field);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+input::placeholder { color: #6f6a62; }
+input:focus {
+  outline: none;
+  border-color: var(--gold-2);
+  box-shadow: 0 0 0 3px rgba(230, 200, 117, 0.18);
+}
+
+.hint { color: var(--muted); font-size: 0.86rem; margin-bottom: 12px; }
+.hint strong { color: var(--text); }
+.form .hint { margin-bottom: 0; text-align: center; }
+.form-switch { text-align: center; font-size: 0.88rem; color: var(--muted); }
+
+/* Gold note, used for "Please return within 15 days." */
+.note {
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--gold-soft);
+  border-left: 3px solid var(--gold-2);
+  color: var(--gold-text);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+/* Error / success message under a form */
+.message { display: none; padding: 10px 14px; border-radius: 10px; font-size: 0.86rem; font-weight: 500; }
+.message.error { display: block; background: var(--danger-soft); color: var(--danger); border: 1px solid rgba(229, 123, 114, 0.3); }
+.message.success { display: block; background: var(--success-soft); color: var(--success); border: 1px solid rgba(159, 207, 159, 0.3); }
+.card > .message { margin-bottom: 14px; }
+
+/* ---------- 6. Login page ---------- */
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.login-brand {
+  background: linear-gradient(160deg, #000000 0%, #161616 100%);
+  border-right: 1px solid var(--gold-line);
+  padding: 64px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+  position: relative;
+  overflow: hidden;
+}
+/* Soft gold glow for decoration */
+.login-brand::after {
+  content: "";
+  position: absolute;
+  width: 420px; height: 420px;
+  right: -160px; bottom: -160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(230, 200, 117, 0.28), rgba(184, 145, 63, 0.1) 45%, transparent 70%);
+}
+.login-brand h1 { font-size: 3.6rem; line-height: 1; }
+.login-brand h1 span {
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.login-brand p { color: var(--muted); max-width: 380px; font-size: 1.05rem; }
+
+.login-card {
+  align-self: center;
+  justify-self: center;
+  width: min(420px, 90%);
+  margin: 40px 0;
+  padding: 32px;
+}
+
+/* Student / Admin switch */
+.role-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--line);
+  padding: 5px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+.role-btn {
+  border: none; background: none; font: inherit; font-weight: 600;
+  padding: 10px; border-radius: 9px; cursor: pointer; color: var(--muted);
+  transition: background 0.2s, color 0.2s;
+}
+.role-btn:hover { color: var(--text); }
+.role-btn.active { background: var(--gradient-gold); color: var(--ink); }
+
+/* Logo square */
+.logo {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--gradient-gold);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 1rem;
+  display: grid;
+  place-items: center;
+}
+.logo-lg { width: 58px; height: 58px; font-size: 1.5rem; border-radius: 14px; }
+
+/* ---------- 7. Top bar (header) ---------- */
+.topbar {
+  background: linear-gradient(180deg, #050505 0%, #141414 100%);
+  padding: 14px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1px solid var(--gold-line);
+}
+.brand { display: flex; align-items: center; gap: 10px; font-family: var(--serif); font-size: 1.3rem; font-weight: 600; }
+.brand em { font-style: normal; color: var(--gold-text); margin-left: 4px; }
+.topbar-right { display: flex; align-items: center; gap: 14px; }
+.welcome { color: var(--muted); font-size: 0.9rem; }
+
+/* ---------- 8. Page content ---------- */
+.container { max-width: 1080px; margin: 0 auto; padding: 36px 24px 60px; }
+.page-title { font-size: 2.6rem; margin-bottom: 22px; }
+
+/* Stat cards */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--gold-line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px 22px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+/* thin gold line on top of each stat card */
+.stat::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--gradient-gold);
+}
+.stat:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+.stat-value {
+  font-family: var(--serif);
+  font-size: 2.6rem;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: lining-nums;
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.stat-label { color: var(--muted); font-size: 0.86rem; font-weight: 500; }
+
+/* ---------- 9. Tables ---------- */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+th {
+  text-align: left;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gold-text);
+  font-weight: 600;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--gold-line);
+  white-space: nowrap;
+}
+td { padding: 13px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr { transition: background 0.15s; }
+tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
+td.actions { text-align: right; }
+.empty { color: var(--muted); text-align: center !important; padding: 22px; }
+
+/* ---------- 10. Badges ---------- */
+.badge {
+  display: inline-block;
+  min-width: 28px;
+  text-align: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.badge-ok { background: var(--gold-soft); color: var(--gold-text); }
+.badge-red { background: var(--danger-soft); color: var(--danger); }
+.badge-pending { background: transparent; color: var(--gold-text); border: 1px solid var(--gold-2); }
+
+/* ---------- 11. Add book form ---------- */
+.add-book-form {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 110px auto;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* ---------- 12. Small message at the bottom of the screen ---------- */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 32px);
+  background: var(--surface-light);
+  color: var(--ink);
+  border: 1px solid var(--gold-1);
+  padding: 12px 20px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-hover);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: center;
+  z-index: 60;
+}
+
+/* ---------- 13. Mobile layout ---------- */
+@media (max-width: 800px) {
+  .login-page { grid-template-columns: 1fr; }
+  .login-brand { padding: 40px 28px; border-right: none; border-bottom: 1px solid var(--gold-line); }
+  .login-brand h1 { font-size: 2.6rem; }
+  .add-book-form { grid-template-columns: 1fr 1fr; }
+  .add-book-form input:first-child { grid-column: 1 / -1; }
+}
+
+@media (max-width: 560px) {
+  .topbar { padding: 12px 16px; }
+  .welcome { display: none; }
+  .container { padding: 24px 14px 48px; }
+  .page-title { font-size: 2rem; }
+  .card { padding: 18px; }
+  .stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stats .stat:nth-child(3):last-child { grid-column: 1 / -1; }
+  .stat-value { font-size: 2.1rem; }
+  .add-book-form { grid-template-columns: 1fr; }
+}

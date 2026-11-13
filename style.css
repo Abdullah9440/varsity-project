@@ -6,16 +6,16 @@
 /* ---------- 1. Colors and sizes (change them here only) ---------- */
 :root {
   /* base colors */
-  --black: #0b0b0b;
+  --black: #dfbaba;
   --ash: #2a2a2a;
   --charcoal: #1c1c1c;
-  --text: #f3efe6;          /* off-white text on dark */
+  --text: #c9af74;          /* off-white text on dark */
   --muted: #a7a197;         /* soft grey helper text */
   --ink: #0b0b0b;           /* black text on light / gold surfaces */
 
   /* gold accent */
-  --gold-1: #b8913f;
-  --gold-2: #e6c875;
+  --gold-1: #b39f73;
+  --gold-2: #e9cb79;
   --gold-text: #e6c875;     /* gold text on dark */
   --gradient-gold: linear-gradient(135deg, #b8913f 0%, #e6c875 100%);
   --gold-line: rgba(230, 200, 117, 0.22);   /* thin gold border */
@@ -109,7 +109,7 @@ h2 { font-size: 1.5rem; margin-bottom: 12px; }
 
 label { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; font-weight: 600; color: var(--muted); }
 
-input {
+input, select {
   font: inherit;
   font-weight: 400;
   color: var(--text);
@@ -120,7 +120,7 @@ input {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 input::placeholder { color: #6f6a62; }
-input:focus {
+input:focus, select:focus {
   outline: none;
   border-color: var(--gold-2);
   box-shadow: 0 0 0 3px rgba(230, 200, 117, 0.18);
@@ -211,19 +211,15 @@ input:focus {
 .role-btn:hover { color: var(--text); }
 .role-btn.active { background: var(--gradient-gold); color: var(--ink); }
 
-/* Logo square */
+/* Logo image (gold book and cap on a dark square) */
 .logo {
-  width: 36px; height: 36px;
+  width: 38px; height: 38px;
   border-radius: 10px;
-  background: var(--gradient-gold);
-  color: var(--ink);
-  font-family: var(--serif);
-  font-weight: 700;
-  font-size: 1rem;
-  display: grid;
-  place-items: center;
+  border: 1px solid var(--gold-line);
+  object-fit: cover;
+  display: block;
 }
-.logo-lg { width: 58px; height: 58px; font-size: 1.5rem; border-radius: 14px; }
+.logo-lg { width: 72px; height: 72px; border-radius: 16px; }
 
 /* ---------- 7. Top bar (header) ---------- */
 .topbar {
@@ -319,17 +315,52 @@ td.actions { text-align: right; }
 }
 .badge-ok { background: var(--gold-soft); color: var(--gold-text); }
 .badge-red { background: var(--danger-soft); color: var(--danger); }
+.badge-category { background: transparent; color: var(--muted); border: 1px solid var(--line); font-weight: 600; }
 .badge-pending { background: transparent; color: var(--gold-text); border: 1px solid var(--gold-2); }
 
 /* ---------- 11. Add book form ---------- */
 .add-book-form {
   display: grid;
-  grid-template-columns: 2fr 1.5fr 110px auto;
+  grid-template-columns: 2fr 1.5fr 1.3fr 100px auto;
   gap: 10px;
   margin-bottom: 12px;
 }
 
-/* ---------- 12. Small message at the bottom of the screen ---------- */
+/* Category drop-down above the student Book List */
+.filter { flex-direction: row; align-items: center; gap: 10px; margin-bottom: 14px; }
+.filter select { min-width: 200px; cursor: pointer; }
+
+/* ---------- 12. Light dashboards (student and admin) ----------
+   The login page stays dark. The two dashboards use white and light ash
+   with the same soft gold accent. Only the color values change here. */
+.dashboard {
+  --text: #1c1b19;          /* near-black text on light */
+  --muted: #625d55;
+  --gold-text: #8a6a26;     /* deeper gold so it is readable on white */
+  --gold-line: rgba(184, 145, 63, 0.35);
+  --gold-soft: rgba(184, 145, 63, 0.12);
+  --surface: linear-gradient(160deg, #ffffff 0%, #ebe8e2 100%);   /* white to light ash cards */
+  --field: linear-gradient(180deg, #ffffff 0%, #f4f2ee 100%);
+  --line: rgba(0, 0, 0, 0.09);
+  --danger: #b4483e;
+  --danger-soft: rgba(180, 72, 62, 0.1);
+  --success: #3f7a43;
+  --success-soft: rgba(63, 122, 67, 0.1);
+  --shadow: 0 8px 24px rgba(40, 36, 30, 0.08);
+  --shadow-hover: 0 12px 30px rgba(40, 36, 30, 0.14);
+
+  min-height: 100vh;
+  background: linear-gradient(160deg, #f7f5f0 0%, #d6d3cc 100%);
+  background-attachment: fixed;
+  color: var(--text);
+}
+.dashboard .topbar { background: linear-gradient(180deg, #ffffff 0%, #eeebe5 100%); }
+.dashboard input::placeholder { color: #9b958b; }
+.dashboard tbody tr:hover { background: rgba(0, 0, 0, 0.025); }
+.dashboard .stat-value { background: linear-gradient(135deg, #8a6a26 0%, #b8913f 100%); -webkit-background-clip: text; background-clip: text; }
+.dashboard .btn-danger:hover:not(:disabled) { color: #ffffff; }
+
+/* ---------- 13. Small message at the bottom of the screen ---------- */
 .toast {
   position: fixed;
   bottom: 24px;
@@ -349,13 +380,14 @@ td.actions { text-align: right; }
   z-index: 60;
 }
 
-/* ---------- 13. Mobile layout ---------- */
+/* ---------- 14. Mobile layout ---------- */
 @media (max-width: 800px) {
   .login-page { grid-template-columns: 1fr; }
   .login-brand { padding: 40px 28px; border-right: none; border-bottom: 1px solid var(--gold-line); }
   .login-brand h1 { font-size: 2.6rem; }
   .add-book-form { grid-template-columns: 1fr 1fr; }
   .add-book-form input:first-child { grid-column: 1 / -1; }
+  .filter select { min-width: 0; flex: 1; }
 }
 
 @media (max-width: 560px) {

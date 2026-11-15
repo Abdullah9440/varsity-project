@@ -1,12 +1,12 @@
 /* =========================================================
    Student Library Management System - style.css
    Classic theme: deep black, charcoal / ash gray, off-white and soft gold
-   ========================================================= */
+  ========================================================= */
 
 /* ---------- 1. Colors and sizes (change them here only) ---------- */
 :root {
   /* base colors */
-  --black: #dfbaba;
+  --black: #272020;
   --ash: #2a2a2a;
   --charcoal: #1c1c1c;
   --text: #c9af74;          /* off-white text on dark */
@@ -30,7 +30,7 @@
   --line: rgba(255, 255, 255, 0.08);        /* thin row lines */
 
   /* status colors */
-  --danger: #e57b72;
+  --danger: #e53222;
   --danger-soft: rgba(229, 123, 114, 0.12);
   --success: #9fcf9f;
   --success-soft: rgba(159, 207, 159, 0.12);
@@ -42,15 +42,19 @@
 }
 
 /* ---------- 2. Basic reset ---------- */
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; 
+  margin: 0;
+  padding:0;
+}
 
 body {
-  font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--charcoal);
   background: var(--page-bg);
   background-attachment: fixed;
   color: var(--text);
   line-height: 1.5;
   min-height: 100vh;
+  
 }
 
 h1, h2 { font-family: var(--serif); font-weight: 600; letter-spacing: 0.01em; }
@@ -237,7 +241,7 @@ input:focus, select:focus {
 .brand { display: flex; align-items: center; gap: 10px; font-family: var(--serif); font-size: 1.3rem; font-weight: 600; }
 .brand em { font-style: normal; color: var(--gold-text); margin-left: 4px; }
 .topbar-right { display: flex; align-items: center; gap: 14px; }
-.welcome { color: var(--muted); font-size: 0.9rem; }
+.welcome { color: var(--muted); font-size: 2rem; }
 
 /* ---------- 8. Page content ---------- */
 .container { max-width: 1080px; margin: 0 auto; padding: 36px 24px 60px; }
@@ -251,7 +255,7 @@ input:focus, select:focus {
   margin-bottom: 20px;
 }
 .stat {
-  background: var(--surface);
+  background: rgb(254, 239, 193);
   border: 1px solid var(--gold-line);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -287,11 +291,11 @@ input:focus, select:focus {
 table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
 th {
   text-align: left;
-  font-size: 0.72rem;
+  font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--gold-text);
-  font-weight: 600;
+  font-weight: 1200;
   padding: 10px 12px;
   border-bottom: 1px solid var(--gold-line);
   white-space: nowrap;
@@ -310,7 +314,7 @@ td.actions { text-align: right; }
   text-align: center;
   padding: 4px 10px;
   border-radius: 999px;
-  font-size: 0.78rem;
+  font-size: 1rem;
   font-weight: 700;
 }
 .badge-ok { background: var(--gold-soft); color: var(--gold-text); }
@@ -335,18 +339,18 @@ td.actions { text-align: right; }
    with the same soft gold accent. Only the color values change here. */
 .dashboard {
   --text: #1c1b19;          /* near-black text on light */
-  --muted: #625d55;
-  --gold-text: #8a6a26;     /* deeper gold so it is readable on white */
-  --gold-line: rgba(184, 145, 63, 0.35);
+  --muted: #2c251a;
+  --gold-text: #2f2205;     /* deeper gold so it is readable on white */
+  --gold-line: rgba(83, 63, 21, 0.35);
   --gold-soft: rgba(184, 145, 63, 0.12);
   --surface: linear-gradient(160deg, #ffffff 0%, #ebe8e2 100%);   /* white to light ash cards */
   --field: linear-gradient(180deg, #ffffff 0%, #f4f2ee 100%);
   --line: rgba(0, 0, 0, 0.09);
-  --danger: #b4483e;
+  --danger: #473736;
   --danger-soft: rgba(180, 72, 62, 0.1);
-  --success: #3f7a43;
+  --success: #609b64;
   --success-soft: rgba(63, 122, 67, 0.1);
-  --shadow: 0 8px 24px rgba(40, 36, 30, 0.08);
+  --shadow: 0 8px 24px rgba(39, 36, 31, 0.08);
   --shadow-hover: 0 12px 30px rgba(40, 36, 30, 0.14);
 
   min-height: 100vh;
@@ -354,13 +358,13 @@ td.actions { text-align: right; }
   background-attachment: fixed;
   color: var(--text);
 }
-.dashboard .topbar { background: linear-gradient(180deg, #ffffff 0%, #eeebe5 100%); }
-.dashboard input::placeholder { color: #9b958b; }
+.dashboard .topbar { background:#d29410 }
+.dashboard input::placeholder { color: #2c1f06; }
 .dashboard tbody tr:hover { background: rgba(0, 0, 0, 0.025); }
-.dashboard .stat-value { background: linear-gradient(135deg, #8a6a26 0%, #b8913f 100%); -webkit-background-clip: text; background-clip: text; }
+.dashboard .stat-value { background: black; background-clip: text; }
 .dashboard .btn-danger:hover:not(:disabled) { color: #ffffff; }
 
-/* ---------- 13. Small message at the bottom of the screen ---------- */
+/* Small message at the bottom of the screen*/ 
 .toast {
   position: fixed;
   bottom: 24px;

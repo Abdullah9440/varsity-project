@@ -3,7 +3,7 @@
 
    কোডটা যেভাবে সাজানো:
      ১. সেটিংস
-     ২. স্টোরেজ: load() ও save()  <- শুধু এই জায়গাই localStorage ধরে
+     ২. স্টোরেজ:load() ও save()  <- শুধু এই জায়গাই localStorage ধরে
      ৩. হেল্পার ফাংশন (তারিখ, স্টক, ছোট ছোট টুল)
      ৪. লগইন, সাইন-আপ ও লগআউট
      ৫. স্টুডেন্ট ড্যাশবোর্ড
@@ -13,8 +13,7 @@
 
 
 /* ---------- ১. সেটিংস ---------- */
-
-const STORAGE_KEY = "studentLibraryDB";   // localStorage-এ ডেটা রাখার চাবির নাম
+const STORAGE_KEY = "studentLibraryDB"; // localStorage-এ ডেটা রাখার চাবির নাম
 const LOAN_DAYS = 15;                     // বই ১৫ দিনের মধ্যে ফেরত দিতে হবে
 const MAX_BOOKS = 2;                      // একজন স্টুডেন্ট একসাথে সর্বোচ্চ ২টা বই রাখতে পারবে
 const DAY_MS = 24 * 60 * 60 * 1000;       // এক দিনে কত মিলিসেকেন্ড
@@ -27,46 +26,26 @@ let currentUser = null;       // কে লগইন করে আছে: { role
 
 
 /* ---------- ২. স্টোরেজ (নকল ডেটাবেস) ---------- */
-
-/**
- * load()
- * localStorage থেকে ডেটাবেস পড়ে "db" ভেরিয়েবলে রাখে।
- * একদম প্রথমবার (কিছু সেভ করা নেই) হলে ৪টা নমুনা বইসহ শুরুর ডেটা বানায়।
- * পরে আসল ব্যাকএন্ড লাগালে শুধু এই ফাংশন (আর save) বদলাতে হবে।
- */
-function load() {
+function load(){
   const savedText = localStorage.getItem(STORAGE_KEY);
   if (savedText) {
-    db = JSON.parse(savedText);      // সেভ করা লেখাকে আবার অবজেক্টে রূপান্তর করা
-    // ক্যাটাগরি যোগ হওয়ার আগে সেভ করা বইগুলোর ক্যাটাগরি হবে "General"
+    db = JSON.parse(savedText);
     db.books.forEach(function (book) {
       if (!book.category) book.category = "General";
     });
   } else {
-    db = createStartingData();       // প্রথমবার: নমুনা ডেটা ব্যবহার করা
+    db = createStartingData();   
     save();
   }
 }
-
-/**
- * save()
- * পুরো "db" অবজেক্টকে লেখা (JSON) বানিয়ে localStorage-এ রাখে।
- * প্রতিটা পরিবর্তনের পরে এটা কল করতে হয়, যাতে পেজ রিফ্রেশ করলেও ডেটা থাকে।
- */
 function save() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
 }
-
-/**
- * createStartingData()
- * ৪টা নমুনা বইসহ ফাঁকা ডেটাবেস ফেরত দেয়।
- * লক্ষ্য করুন: আমরা শুধু "totalCopies" সেভ করি। available সংখ্যা সবসময় হিসাব করে বের করা হয়।
- */
 function createStartingData() {
   return {
-    nextId: 5,          // নতুন বই বা লোনকে দেওয়ার পরের আইডি নম্বর
-    students: [],       // { name, studentId, password }
-    books: [            // { id, title, author, category, totalCopies }
+    nextId: 5,
+    students: [],
+    books: [
       { id: 1, title: "To Kill a Mockingbird", author: "Harper Lee", category: "Literature", totalCopies: 3 },
       { id: 2, title: "1984", author: "George Orwell", category: "Literature", totalCopies: 2 },
       { id: 3, title: "The Alchemist", author: "Paulo Coelho", category: "Philosophy", totalCopies: 4 },
@@ -75,22 +54,9 @@ function createStartingData() {
     loans: []           // { id, bookId, bookTitle, studentId, borrowDate, status, requestDate, returnDate }
   };
 }
-
-
-/* ---------- ৩. হেল্পার ফাংশন ---------- */
-
-/**
- * byId(id)
- * document.getElementById(id) লেখার ছোট রাস্তা।
- */
 function byId(id) {
   return document.getElementById(id);
 }
-
-/**
- * newId()
- * বই বা লোনের জন্য নতুন ইউনিক নম্বর দেয়, তারপর কাউন্টার এক বাড়ায়।
- */
 function newId() {
   const id = db.nextId;
   db.nextId = db.nextId + 1;

@@ -405,3 +405,112 @@ td.actions { text-align: right; }
   .stat-value { font-size: 2.1rem; }
   .add-book-form { grid-template-columns: 1fr; }
 }
+
+/* ---------- 15. No horizontal overflow (all screens) ---------- */
+html { max-width: 100%; overflow-x: hidden; }
+body { max-width: 100%; overflow-x: clip; }
+img, svg, video, canvas { max-width: 100%; height: auto; }
+.logo { height: 38px; }
+.logo-lg { height: 72px; }
+input, select, button, textarea { max-width: 100%; }
+h1, h2, p, td, th, label, .brand span { overflow-wrap: break-word; word-wrap: break-word; }
+.container, .card, .stats > *, .add-book-form > * { min-width: 0; }
+.table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ---------- 16. Hamburger button and slide-in menu ---------- */
+/* Hidden on desktop: the top bar stays exactly as before. */
+.menu-toggle { display: none; }
+.menu-backdrop { display: none; }
+
+@media (max-width: 767.98px) {
+  .topbar { padding: 12px 16px; }
+  .brand { min-width: 0; font-size: 1.15rem; }
+  .brand span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .logo { flex-shrink: 0; }
+
+  /* Hamburger (three lines) */
+  .menu-toggle {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    flex-shrink: 0;
+    width: 44px; height: 44px;
+    padding: 0 11px;
+    border: 1px solid var(--gold-line);
+    border-radius: 10px;
+    background: transparent;
+    cursor: pointer;
+  }
+  .menu-toggle span {
+    display: block;
+    height: 2px;
+    width: 100%;
+    border-radius: 2px;
+    background: var(--text);
+    transition: transform 0.25s, opacity 0.2s;
+  }
+  .menu-toggle[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .menu-toggle[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+  .menu-toggle[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  /* The top-bar links become a panel that slides in from the right */
+  .side-menu {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: min(280px, 82vw);
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 16px;
+    padding: 84px 22px 24px;
+    background: var(--surface);
+    border-left: 1px solid var(--gold-line);
+    box-shadow: var(--shadow-hover);
+    transform: translateX(100%);
+    visibility: hidden;
+    transition: transform 0.3s ease, visibility 0.3s;
+    z-index: 2;
+    overflow-y: auto;
+  }
+  .side-menu.open { transform: translateX(0); visibility: visible; }
+  .side-menu .welcome { display: block; font-size: 1.05rem; font-weight: 600; color: var(--text); }
+  .side-menu .btn { width: 100%; }
+  /* keep the hamburger above the open panel so it can close it */
+  .menu-toggle { position: relative; z-index: 3; }
+
+  .menu-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 9;   /* below the sticky top bar (z-index 10) that holds the menu */
+  }
+  .menu-backdrop.show { opacity: 1; pointer-events: auto; }
+  html.menu-open { overflow: hidden; }
+
+  /* Page content fills the phone width */
+  .container { width: 100%; padding: 24px 14px 48px; }
+  .page-title { font-size: 2rem; }
+  .card { padding: 18px; }
+  .card h2 { font-size: 1.3rem; }
+  .note { display: block; }
+  .login-card { width: calc(100% - 28px); padding: 24px 18px; }
+  .login-brand { padding: 36px 20px; }
+  .login-brand h1 { font-size: 2.3rem; }
+  .filter { flex-wrap: wrap; }
+  .filter select { width: 100%; min-width: 0; }
+
+  /* Tables scroll inside their own box; long text cells wrap */
+  table { font-size: 0.86rem; }
+  th { font-size: 0.8rem; padding: 8px 10px; }
+  td { padding: 10px; min-width: 90px; }
+  td.actions { min-width: 0; white-space: nowrap; }
+}

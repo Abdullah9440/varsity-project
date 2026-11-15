@@ -725,3 +725,51 @@ function init() {
 }
 
 init();
+
+/* ---------- ৮. মোবাইল মেনু (Mobile slide-in menu) ---------- */
+/* Below 768px the top-bar links move into a slide-in menu opened by the hamburger button. */
+
+function toggleMenu(button) {
+  const menu = byId(button.getAttribute("aria-controls"));
+  const willOpen = !menu.classList.contains("open");
+  closeMenu();
+  if (willOpen) {
+    menu.classList.add("open");
+    button.setAttribute("aria-expanded", "true");
+    button.setAttribute("aria-label", "Close menu");
+    byId("menuBackdrop").classList.add("show");
+    document.documentElement.classList.add("menu-open");
+  }
+}
+
+function closeMenu() {
+  document.querySelectorAll(".side-menu.open").forEach(function (menu) { menu.classList.remove("open"); });
+  document.querySelectorAll(".menu-toggle").forEach(function (button) {
+    button.setAttribute("aria-expanded", "false");
+    button.setAttribute("aria-label", "Open menu");
+  });
+  const backdrop = byId("menuBackdrop");
+  if (backdrop) backdrop.classList.remove("show");
+  document.documentElement.classList.remove("menu-open");
+}
+
+// Close the menu after a menu button is tapped, on Escape, or when switching to desktop width
+document.addEventListener("click", function (event) {
+  if (event.target.closest(".side-menu button")) closeMenu();
+});
+document.addEventListener("keydown", function (event) {
+  if (event.key === "Escape") closeMenu();
+});
+window.addEventListener("resize", function () {
+  if (window.innerWidth >= 768) closeMenu();
+});
+
+
+/* ---------- ৯. অফলাইন অ্যাপ (Service worker for the installable PWA) ---------- */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("/service-worker.js").catch(function (error) {
+      console.warn("Service worker registration failed:", error);
+    });
+  });
+}

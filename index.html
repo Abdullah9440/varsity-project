@@ -2,11 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Student Library Management System</title>
   <!-- App install support: lets phones and computers add this app to the home screen -->
- 
+  <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#0b0b0b" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Library" />
@@ -96,7 +98,8 @@
   <section id="studentPage" class="page dashboard hidden">
     <header class="topbar">
       <div class="brand"><img class="logo" src="habht.jpeg" alt="Student Library logo" /><span>Student Library</span></div>
-      <div class="topbar-right">
+      <button type="button" class="menu-toggle" aria-label="Open menu" aria-controls="studentMenu" aria-expanded="false" onclick="toggleMenu(this)"><span></span><span></span><span></span></button>
+      <div id="studentMenu" class="topbar-right side-menu">
         <span id="studentWelcome" class="welcome"></span>
         <button type="button" class="btn btn-light" onclick="logout()">Log out</button>
       </div>
@@ -150,7 +153,8 @@
   <section id="adminPage" class="page dashboard hidden">
     <header class="topbar">
       <div class="brand"><img class="logo" src="habht.jpeg" alt="Student Library logo" /><span>Student Library <em>Admin</em></span></div>
-      <div class="topbar-right">
+      <button type="button" class="menu-toggle" aria-label="Open menu" aria-controls="adminMenu" aria-expanded="false" onclick="toggleMenu(this)"><span></span><span></span><span></span></button>
+      <div id="adminMenu" class="topbar-right side-menu">
         <span class="welcome">Logged in as admin</span>
         <button type="button" class="btn btn-light" onclick="logout()">Log out</button>
       </div>
@@ -216,6 +220,9 @@
       </div>
     </main>
   </section>
+
+  <!-- Dark backdrop behind the mobile slide-in menu -->
+  <div id="menuBackdrop" class="menu-backdrop" onclick="closeMenu()"></div>
 
   <!-- Small pop-up message at the bottom of the screen -->
   <div id="toast" class="toast hidden"></div>

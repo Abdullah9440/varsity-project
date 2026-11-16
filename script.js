@@ -1,31 +1,15 @@
-/* =========================================================
-   স্টুডেন্ট লাইব্রেরি ম্যানেজমেন্ট সিস্টেম - script.js
 
-   কোডটা যেভাবে সাজানো:
-     ১. সেটিংস
-     ২. স্টোরেজ:load() ও save()  <- শুধু এই জায়গাই localStorage ধরে
-     ৩. হেল্পার ফাংশন (তারিখ, স্টক, ছোট ছোট টুল)
-     ৪. লগইন, সাইন-আপ ও লগআউট
-     ৫. স্টুডেন্ট ড্যাশবোর্ড
-     ৬. অ্যাডমিন ড্যাশবোর্ড
-     ৭. অ্যাপ চালু করা
-   ========================================================= */
-
-
-/* ---------- ১. সেটিংস ---------- */
-const STORAGE_KEY = "studentLibraryDB"; // localStorage-এ ডেটা রাখার চাবির নাম
-const LOAN_DAYS = 15;                     // বই ১৫ দিনের মধ্যে ফেরত দিতে হবে
-const MAX_BOOKS = 2;                      // একজন স্টুডেন্ট একসাথে সর্বোচ্চ ২টা বই রাখতে পারবে
-const DAY_MS = 24 * 60 * 60 * 1000;       // এক দিনে কত মিলিসেকেন্ড
-const ADMIN_USERNAME = "admin";           // ডেমো অ্যাডমিন অ্যাকাউন্ট
+const STORAGE_KEY = "studentLibraryDB"; 
+const LOAN_DAYS = 15;                    
+const MAX_BOOKS = 2;                      
+const DAY_MS = 24 * 60 * 60 * 1000;      
+const ADMIN_USERNAME = "admin";          
 const ADMIN_PASSWORD = "admin123";
 const LIMIT_MESSAGE = "You can borrow only 2 books at a time. Please return a book first.";
 
-let db = null;                // পুরো ডেটাবেস (স্টুডেন্ট, বই, লোন) অ্যাপ চলার সময় এই ভেরিয়েবলে থাকে
-let currentUser = null;       // কে লগইন করে আছে: { role: "student", studentId: "..." } অথবা { role: "admin" }
+let db = null;            
+let currentUser = null;      
 
-
-/* ---------- ২. স্টোরেজ (নকল ডেটাবেস) ---------- */
 function load(){
   const savedText = localStorage.getItem(STORAGE_KEY);
   if (savedText) {
@@ -62,12 +46,6 @@ function newId() {
   db.nextId = db.nextId + 1;
   return id;
 }
-
-/**
- * escapeHtml(text)
- * লেখাকে HTML-এর ভেতরে বসানোর জন্য নিরাপদ করে। এতে বইয়ের নাম "<b>" হলেও
- * সেটা সাধারণ লেখা হিসেবে দেখায়, পেজ ভেঙে দিতে পারে না।
- */
 function escapeHtml(text) {
   return String(text)
     .replace(/&/g, "&amp;")
@@ -76,57 +54,27 @@ function escapeHtml(text) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
-
-/**
- * formatDate(isoText)
- * সেভ করা তারিখ (যেমন "2026-11-11T10:00:00.000Z") কে "11 Nov 2026" আকারে দেখায়।
- */
 function formatDate(isoText) {
   return new Date(isoText).toLocaleDateString("en-GB", {
     day: "2-digit", month: "short", year: "numeric"
   });
 }
-
-/**
- * getDueDate(borrowDate)
- * ফেরতের তারিখ = বই নেওয়ার তারিখ + ১৫ দিন।
- */
 function getDueDate(borrowDate) {
   return new Date(new Date(borrowDate).getTime() + LOAN_DAYS * DAY_MS).toISOString();
 }
-
-/**
- * isActive(loan)
- * স্টুডেন্টের কাছে বই থাকা পর্যন্ত লোনটা "active":
- * মানে status হয় "borrowed" অথবা "return_requested" (অ্যাডমিনের অপেক্ষায়)।
- */
 function isActive(loan) {
   return loan.status === "borrowed" || loan.status === "return_requested";
 }
 
-/**
- * countActiveLoans(bookId)
- * একটা বইয়ের কয়টা কপি এখন স্টুডেন্টদের কাছে আছে তা গোনে।
- */
 function countActiveLoans(bookId) {
   return db.loans.filter(function (loan) {
     return loan.bookId === bookId && isActive(loan);
   }).length;
 }
-
-/**
- * getAvailable(book)
- * পাওয়া যাওয়া কপি = মোট কপি - এখন ধার দেওয়া কপি।
- * এই সংখ্যা আমরা কখনো সেভ করি না, তাই অ্যাডমিন আর স্টুডেন্ট সবসময় একই মান দেখে।
- */
 function getAvailable(book) {
   return book.totalCopies - countActiveLoans(book.id);
 }
 
-/**
- * getTotalAvailable()
- * সব বইয়ের পাওয়া যাওয়া কপি যোগ করে মোট সংখ্যা দেয়।
- */
 function getTotalAvailable() {
   let total = 0;
   db.books.forEach(function (book) { total += getAvailable(book); });
@@ -153,10 +101,7 @@ function getActiveLoans(studentId) {
   });
 }
 
-/**
- * getCategories()
- * বইগুলোতে ব্যবহার হওয়া সব ক্যাটাগরি দেয়, কোনো পুনরাবৃত্তি ছাড়া, A-Z ক্রমে।
- */
+
 function getCategories() {
   const names = [];
   db.books.forEach(function (book) {
@@ -165,28 +110,18 @@ function getCategories() {
   return names.sort();
 }
 
-/**
- * getStudentName(studentId)
- * স্টুডেন্টের পুরো নাম ফেরত দেয়, অ্যাডমিনের Return Requests তালিকায় লাগে।
- */
+
 function getStudentName(studentId) {
   const student = findStudent(studentId);
   return student ? student.name : "Unknown student";
 }
 
-/**
- * getPendingRequests()
- * অ্যাডমিনের অনুমোদনের অপেক্ষায় থাকা সব ফেরতের অনুরোধ দেয়।
- */
+
 function getPendingRequests() {
   return db.loans.filter(function (l) { return l.status === "return_requested"; });
 }
 
-/**
- * showMessage(elementId, text, type)
- * ফর্মের নিচে error (লাল) বা success (সবুজ) মেসেজ দেখায়।
- * ফাঁকা text দিলে মেসেজটা লুকিয়ে যায়।
- */
+
 function showMessage(elementId, text, type) {
   const box = byId(elementId);
   box.textContent = text;
@@ -218,16 +153,9 @@ function statCard(value, label) {
          '</div>';
 }
 
-/**
- * emptyRow(columns, text)
- * টেবিল ফাঁকা বোঝানোর জন্য একটা সারি বানায়।
- */
 function emptyRow(columns, text) {
   return '<tr><td class="empty" colspan="' + columns + '">' + text + '</td></tr>';
 }
-
-
-/* ---------- ৪. লগইন, সাইন-আপ ও লগআউট ---------- */
 
 /**
  * showPage(pageId)
@@ -240,10 +168,6 @@ function showPage(pageId) {
   window.scrollTo(0, 0);   // পেজের একদম ওপরে যাওয়া
 }
 
-/**
- * showForm(name)
- * লগইন কার্ডে একটা ফর্ম দেখায়: "studentLogin", "signup" বা "adminLogin"।
- */
 function showForm(name) {
   byId("studentLoginForm").classList.toggle("hidden", name !== "studentLogin");
   byId("signupForm").classList.toggle("hidden", name !== "signup");
@@ -254,20 +178,12 @@ function showForm(name) {
   showMessage("adminLoginMsg", "");
 }
 
-/**
- * switchRole(role)
- * Student / Admin সুইচ থেকে কল হয়। বেছে নেওয়া ট্যাব হাইলাইট করে এবং তার ফর্ম দেখায়।
- */
 function switchRole(role) {
   byId("studentTab").classList.toggle("active", role === "student");
   byId("adminTab").classList.toggle("active", role === "admin");
   showForm(role === "student" ? "studentLogin" : "adminLogin");
 }
 
-/**
- * handleStudentLogin(event)
- * স্টুডেন্ট আইডি ও পাসওয়ার্ড মেলায়। ঠিক হলে স্টুডেন্ট ড্যাশবোর্ড খুলে দেয়।
- */
 function handleStudentLogin(event) {
   event.preventDefault();   // ফর্ম যেন পেজ রিলোড না করে
   const studentId = byId("loginStudentId").value.trim();
@@ -286,10 +202,6 @@ function handleStudentLogin(event) {
   showPage("studentPage");
 }
 
-/**
- * handleSignup(event)
- * ইনপুট যাচাই করে নতুন স্টুডেন্ট অ্যাকাউন্ট বানায়।
- */
 function handleSignup(event) {
   event.preventDefault();
   const name = byId("signupName").value.trim();
@@ -314,21 +226,15 @@ function handleSignup(event) {
     showMessage("signupMsg", "This Student ID is already registered. Please log in instead.", "error");
     return;
   }
-
-  // সব ঠিক আছে: নতুন স্টুডেন্টকে সেভ করা
   db.students.push({ name: name, studentId: studentId, password: password });
   save();
 
   event.target.reset();
   showForm("studentLogin");
-  byId("loginStudentId").value = studentId;   // লগইন ফর্মে আইডিটা আগে থেকেই বসিয়ে দেওয়া
+  byId("loginStudentId").value = studentId; 
   showMessage("studentLoginMsg", "Account created! You can log in now.", "success");
 }
 
-/**
- * handleAdminLogin(event)
- * অ্যাডমিনের ইউজারনেম ও পাসওয়ার্ড মেলায়। ঠিক হলে অ্যাডমিন ড্যাশবোর্ড খুলে দেয়।
- */
 function handleAdminLogin(event) {
   event.preventDefault();
   const username = byId("adminUsername").value.trim();
@@ -346,10 +252,6 @@ function handleAdminLogin(event) {
   showPage("adminPage");
 }
 
-/**
- * logout()
- * বর্তমান ইউজারকে ভুলে যায় এবং লগইন পেজে ফিরিয়ে নেয়।
- */
 function logout() {
   currentUser = null;
   switchRole("student");
@@ -358,12 +260,6 @@ function logout() {
 
 
 /* ---------- ৫. স্টুডেন্ট ড্যাশবোর্ড ---------- */
-
-/**
- * renderStudentPanel()
- * স্টুডেন্ট পেজের সবকিছু আঁকে: স্বাগতম লেখা, ২টা স্ট্যাট কার্ড,
- * "My Library" এবং Book List।
- */
 function renderStudentPanel() {
   const student = findStudent(currentUser.studentId);
   byId("studentWelcome").textContent = "Hi, " + student.name + " (" + student.studentId + ")";
@@ -376,11 +272,6 @@ function renderStudentPanel() {
   renderStudentBooks();
 }
 
-/**
- * renderMyLibrary()
- * স্টুডেন্ট যে বইগুলো রেখেছে সেগুলোর তালিকা দেখায়: নেওয়ার তারিখ, ফেরতের তারিখ
- * এবং একটা "Request Return" বাটন (অনুরোধ পাঠানোর পরে "Return Pending" ব্যাজ)।
- */
 function renderMyLibrary() {
   const loans = getActiveLoans(currentUser.studentId);
 
@@ -404,11 +295,7 @@ function renderMyLibrary() {
   }).join("");
 }
 
-/**
- * renderCategoryFilter()
- * স্টুডেন্টের Book List-এর ওপরের "Category" ড্রপডাউন ভরে।
- * স্টুডেন্ট আগে যে ক্যাটাগরি বেছেছিল সেটা এখনো থাকলে সেটাই ধরে রাখে।
- */
+
 function renderCategoryFilter() {
   const select = byId("categoryFilter");
   const picked = select.value;   // আগে কী বাছা ছিল তা মনে রাখা
@@ -422,13 +309,6 @@ function renderCategoryFilter() {
   select.value = categories.indexOf(picked) !== -1 ? picked : "";
 }
 
-/**
- * renderStudentBooks()
- * Book List ভরে: বিষয়, লেখক, ক্যাটাগরি, পাওয়া যাওয়া কপি এবং Borrow বাটন।
- * শুধু বেছে নেওয়া ক্যাটাগরির বই দেখায় ("All categories" হলে সব বই)।
- * কোনো কপি না থাকলে Borrow বাটন বন্ধ থাকে।
- * স্টুডেন্টের কাছে ২টা বই থাকলে তালিকার ওপরে সীমার মেসেজ দেখায়।
- */
 function renderStudentBooks() {
   const atLimit = getActiveLoans(currentUser.studentId).length >= MAX_BOOKS;
   showMessage("borrowMsg", atLimit ? LIMIT_MESSAGE : "", "error");
@@ -463,12 +343,6 @@ function renderStudentBooks() {
   }).join("");
 }
 
-/**
- * borrowBook(bookId)
- * লগইন করা স্টুডেন্টের জন্য নতুন একটা লোন বানায়।
- * নিয়ম: একসাথে সর্বোচ্চ ২টা বই, একই বই দুইবার নয়,
- * আর বইটার অন্তত একটা কপি ফাঁকা থাকতে হবে।
- */
 function borrowBook(bookId) {
   const book = db.books.find(function (b) { return b.id === bookId; });
   const myLoans = getActiveLoans(currentUser.studentId);
@@ -505,12 +379,6 @@ function borrowBook(bookId) {
   renderStudentPanel();   // পাওয়া যাওয়া কপি নিজে থেকেই ১ কমে যায় (কারণ সেটা হিসাব করা হয়)
 }
 
-/**
- * requestReturn(loanId)
- * লোনের status বদলে "return_requested" করে (দেখায় "Return Pending")।
- * এখন অনুরোধটা অ্যাডমিনের Return Requests তালিকায় আসবে।
- * কপির সংখ্যা এখনো বদলায় না: অ্যাডমিন অনুমোদন দিলে তবেই বদলায়।
- */
 function requestReturn(loanId) {
   const loan = db.loans.find(function (l) { return l.id === loanId; });
   if (!loan || loan.status !== "borrowed") return;
@@ -523,13 +391,6 @@ function requestReturn(loanId) {
   renderStudentPanel();
 }
 
-
-/* ---------- ৬. অ্যাডমিন ড্যাশবোর্ড ---------- */
-
-/**
- * renderAdminPanel()
- * অ্যাডমিন পেজের প্রতিটা অংশ আঁকে।
- */
 function renderAdminPanel() {
   byId("adminStats").innerHTML =
     statCard(db.books.length, "Total Subjects") +
@@ -541,10 +402,6 @@ function renderAdminPanel() {
   renderAdminBooks();
 }
 
-/**
- * renderReturnRequests()
- * প্রতিটা ফেরতের অনুরোধ দেখায়: স্টুডেন্টের নাম, বইয়ের নাম এবং "Approve Return" বাটন।
- */
 function renderReturnRequests() {
   const requests = getPendingRequests();
 
@@ -561,13 +418,6 @@ function renderReturnRequests() {
     '</tr>';
   }).join("");
 }
-
-/**
- * renderBorrowedList()
- * এখন স্টুডেন্টদের কাছে থাকা প্রতিটা বই দেখায়:
- * স্টুডেন্ট আইডি, স্টুডেন্টের নাম, বিষয় এবং নেওয়ার তারিখ।
- * অ্যাডমিন ফেরত অনুমোদন না করা পর্যন্ত বই এই তালিকায় থাকে।
- */
 function renderBorrowedList() {
   const loans = db.loans.filter(isActive);
 
@@ -585,12 +435,6 @@ function renderBorrowedList() {
     '</tr>';
   }).join("");
 }
-
-/**
- * approveReturn(loanId)
- * ফেরত সম্পূর্ণ করে: status হয় "returned", ফলে পাওয়া যাওয়া কপি ১ বাড়ে,
- * অনুরোধটা তালিকা থেকে চলে যায়, আর বইটা স্টুডেন্টের "My Library" থেকে সরে যায়।
- */
 function approveReturn(loanId) {
   const loan = db.loans.find(function (l) { return l.id === loanId; });
   if (!loan || loan.status !== "return_requested") return;
@@ -602,11 +446,6 @@ function approveReturn(loanId) {
   showToast('Return approved: "' + loan.bookTitle + '" is back in stock.');
   renderAdminPanel();
 }
-
-/**
- * handleAddBook(event)
- * Add Book ফর্ম থেকে নতুন বই যোগ করে (বিষয়, লেখক, ক্যাটাগরি, কপির সংখ্যা)।
- */
 function handleAddBook(event) {
   event.preventDefault();
   const title = byId("bookTitle").value.trim();
@@ -631,13 +470,6 @@ function handleAddBook(event) {
   showMessage("addBookMsg", '"' + title + '" was added.', "success");
   renderAdminPanel();
 }
-
-/**
- * renderAdminBooks()
- * সব বই দেখায়: ক্যাটাগরি, মোট কপি, পাওয়া যাওয়া কপি এবং Remove বাটন।
- * কোনো কপি ধার দেওয়া থাকলে Remove বাটন বন্ধ থাকে।
- * Add Book ফর্মের ক্যাটাগরি সাজেশনের তালিকাও এখানে ভরা হয়।
- */
 function renderAdminBooks() {
   // আগে থেকে থাকা ক্যাটাগরিগুলো datalist-এ সাজেশন হিসেবে বসানো
   byId("categoryList").innerHTML = getCategories().map(function (name) {
@@ -664,11 +496,6 @@ function renderAdminBooks() {
     '</tr>';
   }).join("");
 }
-
-/**
- * removeBook(bookId)
- * একটা বই মুছে ফেলে, কিন্তু শুধু তখনই যখন তার কোনো কপি এখন ধার দেওয়া নেই।
- */
 function removeBook(bookId) {
   const book = db.books.find(function (b) { return b.id === bookId; });
 
@@ -686,15 +513,6 @@ function removeBook(bookId) {
   showToast('"' + book.title + '" was removed.');
   renderAdminPanel();
 }
-
-
-/* ---------- ৭. অ্যাপ চালু করা ---------- */
-
-/**
- * refreshCurrentPanel()
- * ডেটা আবার লোড করে এবং যে ড্যাশবোর্ড খোলা আছে সেটা নতুন করে আঁকে।
- * অন্য ব্রাউজার ট্যাব ডেটা বদলালে এটা চলে, যাতে অ্যাডমিন ও স্টুডেন্ট একই তথ্য দেখে।
- */
 function refreshCurrentPanel() {
   if (!currentUser) return;
   load();
@@ -702,10 +520,6 @@ function refreshCurrentPanel() {
   else renderAdminPanel();
 }
 
-/**
- * init()
- * পেজ খোলার সময় একবার চলে: ডেটা লোড করে এবং ফর্মগুলোকে তাদের ফাংশনের সাথে জোড়ে।
- */
 function init() {
   load();
 
